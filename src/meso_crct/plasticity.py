@@ -11,7 +11,7 @@ from dataclasses import dataclass
 import math
 
 from .circuit import CircuitState
-from .provenance import TransitionReceipt
+from .provenance import TransitionReceipt, state_fingerprint
 
 
 def _unit(value: float, *, name: str) -> float:
@@ -44,6 +44,10 @@ class PlasticityPolicy:
             "minimum_salience_gate",
             _unit(self.minimum_salience_gate, name="minimum_salience_gate"),
         )
+
+
+class PlasticityReceiptMismatch(ValueError):
+    pass
 
 
 _PLASTICITY_CANDIDATE_TOKEN = object()
@@ -104,12 +108,12 @@ def propose_plasticity(
     receipt: TransitionReceipt,
     policy: PlasticityPolicy,
 ) -> PlasticityCandidate:
-    """Create a bounded persistent-learning candidate.
+    """Create a bounded persistent-learning candidate from a matching receipt."""
+    if receipt.after_fingerprint != state_fingerprint(state):
+        raise PlasticityReceiptMismatch(
+            "plasticity state does not match receipt after-state fingerprint"
+        )
 
-    Pleasure is deliberately not used as an independent permanent-preference
-    writer. The signed teaching signal comes from prediction error. Typed
-    salience gates whether the event is important enough to propose an update.
-    """
     gates = (
         ("semantic_relevance", state.salience.semantic_relevance),
         ("motivational_salience", state.salience.motivational_salience),
@@ -123,11 +127,7 @@ def propose_plasticity(
         delta = 0.0
         gate_driver_out: str | None = gate_driver if gate > 0.0 else None
     else:
-        delta = (
-            teaching_signal
-            * gate
-            * policy.maximum_absolute_delta
-        )
+        delta = teaching_signal * gate * policy.maximum_absolute_delta
         gate_driver_out = gate_driver
 
     return PlasticityCandidate(

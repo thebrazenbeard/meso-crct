@@ -116,7 +116,10 @@ def state_fingerprint(state: CircuitState) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
-@dataclass(frozen=True, slots=True)
+_TRANSITION_RECEIPT_TOKEN = object()
+
+
+@dataclass(frozen=True, slots=True, init=False)
 class TransitionReceipt:
     receipt_id: str
     before_phase: str
@@ -131,6 +134,55 @@ class TransitionReceipt:
     verifier_id: str
     before_fingerprint: str
     after_fingerprint: str
+
+    def __init__(
+        self,
+        *,
+        receipt_id: str,
+        before_phase: str,
+        after_phase: str,
+        mode: str,
+        priority: float,
+        dominant_driver: str | None,
+        supporting_drivers: tuple[str, ...],
+        source_kind: str,
+        source_id: str,
+        source_revision: str | None,
+        verifier_id: str,
+        before_fingerprint: str,
+        after_fingerprint: str,
+        _token: object | None = None,
+    ) -> None:
+        if _token is not _TRANSITION_RECEIPT_TOKEN:
+            raise TypeError(
+                "TransitionReceipt must be created by the evaluated transition path"
+            )
+        for name, value in (
+            ("receipt_id", receipt_id),
+            ("before_phase", before_phase),
+            ("after_phase", after_phase),
+            ("mode", mode),
+            ("source_kind", source_kind),
+            ("source_id", source_id),
+            ("verifier_id", verifier_id),
+            ("before_fingerprint", before_fingerprint),
+            ("after_fingerprint", after_fingerprint),
+        ):
+            if not value.strip():
+                raise ValueError(f"{name} must be non-empty")
+        object.__setattr__(self, "receipt_id", receipt_id)
+        object.__setattr__(self, "before_phase", before_phase)
+        object.__setattr__(self, "after_phase", after_phase)
+        object.__setattr__(self, "mode", mode)
+        object.__setattr__(self, "priority", float(priority))
+        object.__setattr__(self, "dominant_driver", dominant_driver)
+        object.__setattr__(self, "supporting_drivers", tuple(supporting_drivers))
+        object.__setattr__(self, "source_kind", source_kind)
+        object.__setattr__(self, "source_id", source_id)
+        object.__setattr__(self, "source_revision", source_revision)
+        object.__setattr__(self, "verifier_id", verifier_id)
+        object.__setattr__(self, "before_fingerprint", before_fingerprint)
+        object.__setattr__(self, "after_fingerprint", after_fingerprint)
 
     @classmethod
     def build(
@@ -173,4 +225,5 @@ class TransitionReceipt:
             verifier_id=provenance.verifier_id,
             before_fingerprint=data["before_fingerprint"],
             after_fingerprint=data["after_fingerprint"],
+            _token=_TRANSITION_RECEIPT_TOKEN,
         )

@@ -1,6 +1,6 @@
 # Bounded Plasticity Candidate V1
 
-The V2 architecture now includes the first persistent-learning bridge.
+The V2 architecture includes a guarded persistent-learning bridge.
 
 Transient salience or pleasure does **not** directly become permanent preference.
 Instead, the reference layer can propose a bounded association-strength change
@@ -8,6 +8,14 @@ when two conditions hold:
 
 1. there is a non-zero signed prediction-error teaching signal;
 2. at least one typed salience channel crosses an explicit policy gate.
+
+The state supplied to `propose_plasticity()` must also exactly match the
+`after_fingerprint` of its transition receipt. A receipt from one evaluated
+state cannot be reused to justify learning from a different state.
+
+`TransitionReceipt` and `PlasticityCandidate` are both constructor-gated in
+the reference API: callers cannot simply instantiate valid-looking versions and
+skip their admission paths.
 
 The strongest qualifying salience driver gates the proposal. The candidate
 delta is bounded by a host-supplied maximum absolute update.
@@ -24,9 +32,8 @@ transition that produced it.
 
 ## Important boundary
 
-The module only **proposes** and previews an association update. It does not own
-durable storage and does not silently admit autobiographical memory or permanent
-identity/preference claims.
+The module only **proposes** and previews an association update. Durable memory
+still performs its own version, replay, non-zero-delta, and lineage checks.
 
 This preserves:
 
@@ -43,6 +50,3 @@ high salience
     !=
 learning without a teaching signal
 ```
-
-The next memory-owner layer can decide how accepted candidates are stored,
-reversed, versioned, and tested for negative transfer.

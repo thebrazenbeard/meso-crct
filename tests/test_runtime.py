@@ -12,6 +12,7 @@ from meso_crct import (
     RuntimePhase,
     SalienceState,
     SourceKind,
+    TransitionReceipt,
     arbitrate,
     classify_phase,
     evaluate_transition,
@@ -88,6 +89,25 @@ def test_resolution_has_explicit_phase():
     assert classify_phase(state) is RuntimePhase.RESOLVING
 
 
+def test_transition_receipt_cannot_be_constructed_directly():
+    with pytest.raises(TypeError):
+        TransitionReceipt(
+            receipt_id="fake",
+            before_phase="quiescent",
+            after_phase="oriented",
+            mode="orienting",
+            priority=1.0,
+            dominant_driver="semantic_relevance",
+            supporting_drivers=(),
+            source_kind="environment",
+            source_id="fake",
+            source_revision="v1",
+            verifier_id="fake",
+            before_fingerprint="before",
+            after_fingerprint="after",
+        )
+
+
 def test_direct_register_write_cannot_become_accepted_source():
     claim = Provenance(
         source_kind=SourceKind.DIRECT_REGISTER_WRITE,
@@ -95,8 +115,6 @@ def test_direct_register_write_cannot_become_accepted_source():
     )
     with pytest.raises(ValueError):
         ProvenanceVerifier([claim], verifier_id="runtime-root-v1")
-
-
 
 
 def test_verified_provenance_cannot_be_constructed_directly():

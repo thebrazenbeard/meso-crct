@@ -5,6 +5,7 @@ from meso_crct import (
     LearningState,
     PlasticityCandidate,
     PlasticityPolicy,
+    PlasticityReceiptMismatch,
     Provenance,
     ProvenanceVerifier,
     RewardState,
@@ -46,6 +47,24 @@ def test_plasticity_candidate_cannot_be_constructed_directly():
             salience_gate=1.0,
             gate_driver="semantic_relevance",
             transition_receipt_id="pretend-receipt",
+        )
+
+
+def test_plasticity_requires_receipt_for_same_after_state():
+    receipt_state = CircuitState(
+        salience=SalienceState(semantic_relevance=0.8),
+        learning=LearningState(prediction_error=1.0),
+    )
+    different_state = CircuitState(
+        salience=SalienceState(semantic_relevance=0.9),
+        learning=LearningState(prediction_error=1.0),
+    )
+    with pytest.raises(PlasticityReceiptMismatch):
+        propose_plasticity(
+            state=different_state,
+            association_id="cue->outcome",
+            receipt=receipt_for(receipt_state),
+            policy=policy(),
         )
 
 
