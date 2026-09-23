@@ -292,7 +292,6 @@ Reference tests are not trained-agent robustness.
 Still open:
 - learned/adaptive policies discovering exploits not explicitly encoded in fixtures;
 - strategic manipulation of goal IDs or obligation policies;
-- cue-match quality and adversarial cue ambiguity;
 - subthreshold cross-module capture over long horizons;
 - host-level source-verifier and event-stream currentness;
 - representativeness and adversarial quality of holdout/counterexample sets;
