@@ -74,6 +74,8 @@ from .memory import (
     PlasticityNoOpError,
     PlasticityReplayError,
     apply_candidate,
+    quarantine_association,
+    release_association,
     revert_last,
 )
 from .plasticity import (
@@ -106,6 +108,16 @@ from .recall_resolution import (
     RecallResolution,
     RecallResolutionPolicy,
     resolve_recall_influences,
+)
+from .review import (
+    AssociationQuarantinedError,
+    AssociationReviewRecord,
+    AssociationReviewRegistry,
+    AssociationReviewStaleError,
+    ReviewAdmission,
+    ReviewDisposition,
+    ReviewIntegrityError,
+    ReviewNoOpError,
 )
 from .runtime import (
     RuntimeFrame,
@@ -184,7 +196,17 @@ __all__ = [
     "PlasticityNoOpError",
     "PlasticityReplayError",
     "apply_candidate",
+    "quarantine_association",
+    "release_association",
     "revert_last",
+    "ReviewDisposition",
+    "ReviewAdmission",
+    "AssociationReviewRecord",
+    "AssociationReviewRegistry",
+    "ReviewNoOpError",
+    "ReviewIntegrityError",
+    "AssociationQuarantinedError",
+    "AssociationReviewStaleError",
     "TargetAppraisalInput",
     "AppraisedTarget",
     "build_target_appraisal",

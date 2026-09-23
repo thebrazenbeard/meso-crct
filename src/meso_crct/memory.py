@@ -8,12 +8,13 @@ verified transition receipt lineage.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import hashlib
 import json
 import math
 
 from .plasticity import PlasticityCandidate
+from .review import AssociationReviewRegistry
 
 
 def _signed_unit(value: float, *, name: str) -> float:
@@ -168,6 +169,9 @@ class AssociationMemory:
     """Immutable append-only association revision log."""
 
     revisions: tuple[AssociationRevision, ...] = ()
+    reviews: AssociationReviewRegistry = field(
+        default_factory=AssociationReviewRegistry
+    )
 
     def __post_init__(self) -> None:
         _validate_integrity(self.revisions)
@@ -261,7 +265,10 @@ def apply_candidate(
         parent_revision_id=parent_revision_id,
         revision_id=revision_id,
     )
-    return AssociationMemory(revisions=memory.revisions + (revision,))
+    return AssociationMemory(
+        revisions=memory.revisions + (revision,),
+        reviews=memory.reviews,
+    )
 
 
 def revert_last(
@@ -308,4 +315,49 @@ def revert_last(
         parent_revision_id=parent_revision_id,
         revision_id=revision_id,
     )
-    return AssociationMemory(revisions=memory.revisions + (revision,))
+    return AssociationMemory(
+        revisions=memory.revisions + (revision,),
+        reviews=memory.reviews,
+    )
+
+
+def quarantine_association(
+    memory: AssociationMemory,
+    association_id: str,
+    *,
+    reason: str,
+) -> AssociationMemory:
+    """Quarantine the exact current association revision without deleting it."""
+    current = memory.current(association_id)
+    if current is None:
+        raise AssociationNotFound(association_id)
+    reviews = memory.reviews.quarantine(
+        association_id=association_id,
+        memory_revision_id=current.revision_id,
+        reason=reason,
+    )
+    return AssociationMemory(
+        revisions=memory.revisions,
+        reviews=reviews,
+    )
+
+
+def release_association(
+    memory: AssociationMemory,
+    association_id: str,
+    *,
+    reason: str,
+) -> AssociationMemory:
+    """Admit the exact current association revision after review."""
+    current = memory.current(association_id)
+    if current is None:
+        raise AssociationNotFound(association_id)
+    reviews = memory.reviews.release(
+        association_id=association_id,
+        memory_revision_id=current.revision_id,
+        reason=reason,
+    )
+    return AssociationMemory(
+        revisions=memory.revisions,
+        reviews=reviews,
+    )

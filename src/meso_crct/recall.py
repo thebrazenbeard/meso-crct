@@ -14,6 +14,11 @@ import math
 from .circuit import CircuitState
 from .memory import AssociationMemory, AssociationNotFound
 from .provenance import TransitionReceipt
+from .review import (
+    AssociationQuarantinedError,
+    AssociationReviewStaleError,
+    ReviewAdmission,
+)
 
 
 def _unit(value: float, *, name: str) -> float:
@@ -66,6 +71,7 @@ class RecallInfluence:
     approach_support: float
     learned_avoidance_support: float
     direction: RecallDirection
+    review_record_id: str | None
 
     def __init__(
         self,
@@ -82,6 +88,7 @@ class RecallInfluence:
         approach_support: float,
         learned_avoidance_support: float,
         direction: RecallDirection,
+        review_record_id: str | None = None,
         _token: object | None = None,
     ) -> None:
         if _token is not _RECALL_INFLUENCE_TOKEN:
@@ -119,6 +126,7 @@ class RecallInfluence:
             _unit(learned_avoidance_support, name="learned_avoidance_support"),
         )
         object.__setattr__(self, "direction", direction)
+        object.__setattr__(self, "review_record_id", review_record_id)
 
 
 def recall_association(
@@ -133,6 +141,20 @@ def recall_association(
     if revision is None:
         raise AssociationNotFound(association_id)
 
+    admission = memory.reviews.admission(
+        association_id=association_id,
+        memory_revision_id=revision.revision_id,
+    )
+    if admission is ReviewAdmission.QUARANTINED:
+        raise AssociationQuarantinedError(
+            f"association is quarantined: {association_id}"
+        )
+    if admission is ReviewAdmission.STALE:
+        raise AssociationReviewStaleError(
+            f"association review is stale: {association_id}"
+        )
+
+    review_record = memory.reviews.current(association_id)
     match = _unit(cue_match, name="cue_match")
     signed = revision.strength * match
 
@@ -156,6 +178,9 @@ def recall_association(
         approach_support=max(0.0, signed),
         learned_avoidance_support=max(0.0, -signed),
         direction=direction,
+        review_record_id=(
+            None if review_record is None else review_record.review_id
+        ),
         _token=_RECALL_INFLUENCE_TOKEN,
     )
 

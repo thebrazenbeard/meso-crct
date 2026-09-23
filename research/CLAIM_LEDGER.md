@@ -64,3 +64,8 @@ States used here:
 | C-052 | Positive incentive salience can provide approach direction while generic motivational salience remains directionally uncommitted. | TESTED_LOCAL | typed directional semantics |
 | C-053 | Epistemic/orienting priority can produce inspect tendency rather than approach. | TESTED_LOCAL | reference action-tendency semantics |
 | C-054 | The end-to-end reference loop can learn a signed association, recall it on a later cue, select the target, and derive opposite action directions at equal selection priority. | TESTED_LOCAL | deterministic integration scenario only |
+| C-055 | Mechanically valid learned associations may still require negative-transfer review before continued use. | IMPLEMENTED_REFERENCE | review state does not alter learned strength |
+| C-056 | Quarantining an association must delete or rewrite its learning history. | REJECTED_AS_COLLAPSE | quarantine suppresses recall while preserving all revisions |
+| C-057 | A quarantined exact association revision can influence current recall. | REJECTED_AS_COLLAPSE | recall admission blocks quarantined revisions |
+| C-058 | A prior review remains automatically valid after the learned association changes. | REJECTED_AS_COLLAPSE | changed revision makes prior review stale and blocks recall |
+| C-059 | Releasing the current reviewed revision can restore recall without reconstructing or rewriting the learned association. | TESTED_LOCAL | append-only review record restores admission |
