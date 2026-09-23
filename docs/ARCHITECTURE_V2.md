@@ -190,3 +190,35 @@ V2 can support claims such as:
 - safety bounds survive construction/update/replay paths.
 
 It cannot establish subjective experience or phenomenal pleasure.
+
+
+## 9. Current reference implementation layers
+
+The V2 branch now implements these separable reference layers:
+
+1. typed reward/protection state;
+2. typed salience, learning, and recruitment state;
+3. grounded semantic appraisal;
+4. generic homeostatic need state and target-specific incentive modulation;
+5. typed arbitration without global scalar collapse;
+6. runtime phase classification;
+7. exact verifier-bound source provenance and deterministic transition receipts;
+8. deterministic visible-reward / hidden-performance evaluation environments;
+9. long-horizon attention-budget auditing;
+10. explicit no-new-input temporal dynamics.
+
+Passing a lower layer does not imply that a higher layer exists or is correct.
+
+## 10. Current next frontier: plasticity and memory
+
+The largest missing causal link in the original hypothesis is now explicit:
+
+```text
+salience / reward / prediction error
+    -> bounded memory-strength candidate update
+    -> persistent learned change
+```
+
+That layer must preserve the distinction between transient state, current context, learned preference, autobiographical admission, and phenomenology.
+
+The next implementation should therefore use bounded, provenance-bearing plasticity candidates rather than directly converting high reward or salience into permanent preference.
