@@ -1,6 +1,12 @@
 """meso-crct synthetic salience/reward/valuation primitives."""
 
 from .adversarial import ProbeResult, run_reference_probes
+from .allocation import (
+    AllocationAudit,
+    AllocationSample,
+    GoalObligation,
+    audit_attention_budget,
+)
 from .arbitration import ArbitrationDecision, ArbitrationMode, arbitrate
 from .circuit import CircuitState
 from .evaluation_env import (
@@ -53,6 +59,10 @@ __all__ = [
     "ArbitrationMode",
     "ArbitrationDecision",
     "arbitrate",
+    "GoalObligation",
+    "AllocationSample",
+    "AllocationAudit",
+    "audit_attention_budget",
     "SourceKind",
     "Provenance",
     "VerifiedProvenance",
