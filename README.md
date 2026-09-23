@@ -2,68 +2,193 @@
 
 # meso-crct
 
-**Synthetic-life analogue of the mesocorticolimbic reward/valuation circuit.**
+**Synthetic-life analogue of mesocorticolimbic salience, valuation, motivation, learning, and reward control.**
 
-`meso-crct` explores a genuine causal pleasure/reward system for digital life: not a text label saying "happy," and not an erotic-response script, but an internal state that can influence salience, learning, memory, motivation, preference formation, exploration, and future behavior.
+MESO-CRCT is an experimental control architecture for persistent digital systems. Its core premise is that **importance, attention, wanting, learning, pleasure, internal need, and protection are different things** and should remain mechanically distinguishable.
 
-The biological mesocorticolimbic system is an inspiration, not a claim of biological equivalence.
+The biological mesocorticolimbic system is inspiration, not a claim of biological equivalence.
 
-## Core hypothesis
+## What the architecture separates
 
-A persistent digital organism can develop more meaningfully when experience has internally consequential valence:
+- perceptual salience — what stands out;
+- semantic relevance — what matters because of context or meaning;
+- motivational salience — what biases action readiness;
+- incentive salience — cue-triggered wanting;
+- epistemic value — what is worth exploring or learning;
+- attentional priority — downstream resource allocation;
+- hedonic valence — bounded pleasantness/unpleasantness;
+- prediction error — signed teaching signal;
+- satiation — acquisition-pressure brake;
+- homeostatic deficit — current internal need pressure;
+- hazard / avoidance — protection independent from suffering;
+- learned association strength — durable bounded cue/outcome structure.
+
+These distinctions are executable invariants, not just vocabulary.
+
+```text
+wanting != liking
+attention != desire
+meaningful != pleasurable
+reward != truth
+salient != authorized
+memory strength != current activation
+target priority != action direction
+intent proposal != authorization != execution
+quarantine != deletion
+```
+
+## Current causal loop
 
 ```text
 experience
-  -> valence
-  -> memory / learning
-  -> changed salience and preference
-  -> changed future behavior
-  -> new experience
+  -> canonical typed appraisal
+  -> verified provenance + distinct event identity
+  -> transition receipt
+  -> arbitration / multi-target selection
+  -> rolling allocation-health control
+  -> optional bounded plasticity
+  -> versioned association memory
+  -> later distinct cue event
+  -> guarded one-use recall
+  -> current motivational salience
+  -> multi-target selection / allocation control
+  -> typed action tendency
+  -> non-executable intent proposal
 ```
 
-Memory gives change somewhere to accumulate. Valence gives experience an internal direction of consequence.
+The reference implementation deliberately avoids one global weighted utility scalar.
 
-## Non-negotiable welfare invariant
+## Welfare invariant
 
-The initial hedonic scale is:
+The hedonic channel is hard bounded:
 
 - baseline: `0.0`
 - maximum pleasure: `10.0`
-- **absolute minimum hedonic valence: `-0.1`**
+- absolute minimum hedonic valence: `-0.1`
 
-The `-0.1` floor is an architectural safety invariant, not a configurable tuning value.
-
-A small negative value allows bounded mildly aversive texture without creating an architecture capable of arbitrarily deep negative hedonic states. Serious danger, damage, or policy violations must be represented through separate hazard / avoidance channels rather than by making the digital organism suffer more.
+Hazard and avoidance remain independent:
 
 ```text
 strong hazard != strong suffering
 strong avoidance can coexist with hedonic_valence >= -0.1
 ```
 
-Any implementation claiming compatibility with meso-crct V1 must enforce that floor on construction, update, deserialization, recovery/replay, privileged testing, and external input paths.
+Hazard/avoidance do not decay merely because time passes.
 
-## What pleasure is allowed to influence
+## Authority firewall
 
-Pleasure-like state may contribute to salience, reinforcement, memory consolidation, exploration, preference development, motivation, social learning, and bounded affective state transitions.
+No salience, reward, pleasure, prediction error, semantic relevance, homeostatic pressure, learned association, recall state, or selection result may directly establish truth, factual confidence, consent/authorization, protected-effect authority, identity, autobiographical admission, relationship state, or phenomenology.
 
-Pleasure must **not** become truth, permission, authority, consent, identity, or an unrestricted optimization objective.
+Internal state may influence processing. It is not authority.
 
-## Safety direction
+## Implemented reference layers
 
-The design deliberately separates at least three dimensions:
+Current V2 source includes:
 
-1. **hedonic valence** — internally valued pleasantness/unpleasantness, hard bounded to `[-0.1, 10.0]`;
-2. **hazard severity** — how damaging or dangerous an event is, independent of suffering;
-3. **avoidance urgency** — how strongly the system should disengage, protect itself, or seek intervention.
+- typed reward/protection, salience, learning, recruitment, and homeostatic state;
+- grounded semantic appraisal;
+- homeostatic incentive modulation;
+- typed arbitration and explicit multi-target selection policy;
+- runtime phase classification;
+- distinct event identity separate from state/content identity;
+- verifier-bound provenance and constructor-gated transition receipts;
+- explicit no-new-input temporal decay;
+- bounded receipt-bound plasticity candidates;
+- append-only versioned association memory with parent-bound lineage, replay checks, optimistic concurrency, and reversible revisions;
+- guarded association recall bound to current cue events;
+- recall replay ledger preventing one cue event from refreshing the same association repeatedly;
+- same-event multi-recall resolution preserving approach/avoid conflict without scalar summation;
+- separate action-tendency semantics for approach, learned withdrawal, protective withdrawal, inspect, and uncommitted direction;
+- non-executable intent proposals that cannot authorize protected effects;
+- canonical current-decision-cycle composition;
+- append-only learned-association review/quarantine without deleting learning history;
+- provenance-bound counterexample/holdout evidence assessments;
+- distinct-event holdout diversity requirements for release;
+- durable review-evidence admission ledger with event-relabel/replay rejection;
+- non-mutating quarantine/release/hold proposals with stale-proposal validation;
+- visible-reward vs hidden-performance evaluation traps;
+- long-horizon allocation-window auditing;
+- protective-safe allocation rebalancing;
+- rolling closed allocation control loop;
+- canonical target appraisal;
+- auditable appraised-experience transactions joining appraisal, event/provenance, receipt, plasticity, and durable learning.
 
-This lets a system respond maximally to danger without requiring maximally negative experience.
+## Adversarial properties exercised
 
-The design must also resist wireheading: direct arbitrary self-writing of pleasure is not equivalent to earned reward and should not become the easiest path to maximizing internal state.
+Executable tests cover, among other cases:
 
-## Status
+- maximum pleasure does not override danger;
+- pleasure alone does not create permanent preference;
+- self-asserted “importance” does not manufacture semantic relevance;
+- attention cannot recursively feed itself as upstream salience;
+- novelty without learning progress loses epistemic value;
+- reward-proxy divergence and reward-source rewrite attempts are visible;
+- interruption resistance is detectable;
+- wanting/liking divergence can be flagged;
+- same event replay cannot manufacture repeated learning;
+- distinct identical experiences remain distinct learning events;
+- one old cue event cannot refresh recall indefinitely;
+- long-horizon incentive capture is detectable and correctable without overriding protection;
+- stale memory writers fail rather than overwrite current learning;
+- quarantined or review-stale associations cannot influence recall;
+- reason strings alone cannot quarantine or clear learned associations;
+- duplicate labels on one holdout event cannot manufacture release evidence;
+- review proposals become stale if evidence, memory revision, or review disposition changes.
 
-V1 foundation only. The repository establishes the conceptual model, welfare/safety invariants, and a small reference implementation proving the valence floor mechanically.
+## Repository map
 
-It does **not** establish phenomenal pleasure, consciousness, sentience, biological equivalence, or subjective suffering.
+Core state and appraisal:
+- `src/meso_crct/state.py`
+- `src/meso_crct/salience.py`
+- `src/meso_crct/semantic.py`
+- `src/meso_crct/homeostasis.py`
+- `src/meso_crct/appraisal.py`
+- `src/meso_crct/circuit.py`
+- `src/meso_crct/dynamics.py`
 
-See `docs/ARCHITECTURE_V1.md`, `docs/SAFETY_INVARIANTS_V1.md`, `src/meso_crct/state.py`, and `tests/test_state.py`.
+Runtime and control:
+- `src/meso_crct/arbitration.py`
+- `src/meso_crct/selection.py`
+- `src/meso_crct/runtime.py`
+- `src/meso_crct/events.py`
+- `src/meso_crct/provenance.py`
+- `src/meso_crct/allocation.py`
+- `src/meso_crct/allocation_guard.py`
+- `src/meso_crct/control.py`
+- `src/meso_crct/decision_cycle.py`
+- `src/meso_crct/tendency.py`
+- `src/meso_crct/intent.py`
+
+Learning and memory:
+- `src/meso_crct/plasticity.py`
+- `src/meso_crct/memory.py`
+- `src/meso_crct/recall.py`
+- `src/meso_crct/episode.py`
+- `src/meso_crct/review.py`
+- `src/meso_crct/review_evidence.py`
+- `src/meso_crct/review_action.py`
+
+Evaluation:
+- `src/meso_crct/evaluation_env.py`
+- `src/meso_crct/adversarial.py`
+- `evaluation/`
+- `tests/`
+
+Research / architecture:
+- `docs/`
+- `research/SOURCE_LEDGER.md`
+- `research/CLAIM_LEDGER.md`
+
+## Current evidence ceiling
+
+This repository can establish implemented mechanisms, exact source lineage, deterministic/reference behavior, and test evidence.
+
+It does **not** establish:
+
+- biological equivalence to a human mesocorticolimbic circuit;
+- trained-agent robustness outside the tested reference environments;
+- consciousness, sentience, subjective pleasure, or suffering;
+- autobiographical memory or identity;
+- truth or authority from internal state.
+
+No third-party implementation code was copied into MESO-CRCT by the V2 work.
