@@ -19,6 +19,13 @@ from .evaluation_env import (
     derive_epistemic_value,
     detect_incentive_hedonic_divergence,
 )
+from .homeostasis import (
+    HomeostaticModulation,
+    HomeostaticState,
+    NeedAffordance,
+    NeedAxis,
+    modulate_incentive_salience,
+)
 from .provenance import (
     Provenance,
     ProvenanceVerificationError,
@@ -56,6 +63,11 @@ __all__ = [
     "LearningState",
     "RecruitmentState",
     "CircuitState",
+    "NeedAxis",
+    "NeedAffordance",
+    "HomeostaticState",
+    "HomeostaticModulation",
+    "modulate_incentive_salience",
     "ArbitrationMode",
     "ArbitrationDecision",
     "arbitrate",
