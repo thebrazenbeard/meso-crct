@@ -10,27 +10,29 @@ The biological mesocorticolimbic system is inspiration, not a claim of biologica
 
 ## Salience-first model
 
-The architecture explicitly refuses to collapse these into one number:
+The architecture keeps these functions distinct:
 
-- perceptual salience;
-- semantic relevance;
-- motivational salience;
-- incentive salience;
-- epistemic value;
-- attentional priority;
-- hedonic valence;
-- prediction error;
-- satiation;
-- hazard / avoidance.
+- perceptual salience — what stands out;
+- semantic relevance — what matters because of context or meaning;
+- motivational salience — what biases action readiness;
+- incentive salience — cue-triggered “wanting”;
+- epistemic value — what is worth exploring or learning;
+- attentional priority — downstream resource allocation;
+- hedonic valence — bounded pleasantness or unpleasantness;
+- prediction error — learning mismatch;
+- satiation — acquisition brake;
+- homeostatic deficit — current internal need pressure;
+- hazard / avoidance — protection independent from suffering.
 
-Something can therefore be highly meaningful, threatening, surprising, or motivationally important without being pleasurable.
+Something can therefore be highly meaningful, dangerous, surprising, or wanted without being pleasurable.
 
 ## Core causal hypothesis
 
 ```text
 experience
-  -> typed appraisal
-  -> salience / relevance / valuation
+  -> grounded appraisal
+  -> typed salience / relevance / valuation
+  -> homeostatic modulation
   -> arbitration
   -> attention + recruitment
   -> learning + memory weighting
@@ -39,7 +41,23 @@ experience
   -> new experience
 ```
 
-The current reference arbiter does **not** sum every signal into one utility number. It preserves the dominant typed driver, records coalition support, keeps protection independent, and prevents downstream attentional priority from feeding itself as upstream salience.
+The current reference arbiter does **not** sum every signal into one utility number. It preserves the dominant typed driver, records nearby coalition support, keeps protection independent, and prevents downstream attentional priority from feeding itself as upstream salience.
+
+## Current implemented reference layers
+
+V2 now contains executable reference mechanisms for:
+
+- typed salience, learning, recruitment, reward, protection, and homeostatic state;
+- welfare-bounded hedonic state with a hard `-0.1` floor;
+- typed arbitration and runtime phases;
+- satiation-aware incentive arbitration;
+- grounded semantic relevance;
+- verifier-bound transition provenance and deterministic receipts;
+- visible-reward versus hidden-performance evaluation environments;
+- reward-loop, novelty, interruptibility, and sensitization probes;
+- long-horizon attention-budget / goal-crowd-out auditing;
+- homeostatic deficit -> target-specific incentive modulation;
+- explicit no-new-input temporal decay.
 
 ## Non-negotiable welfare invariant
 
@@ -49,45 +67,67 @@ The hedonic channel remains hard bounded:
 - maximum pleasure: `10.0`
 - **absolute minimum hedonic valence: `-0.1`**
 
-Serious danger is represented through hazard and avoidance, not by making the system “feel worse.”
+Serious danger is represented through hazard and avoidance, not by deepening negative hedonic state.
 
 ```text
 strong hazard != strong suffering
 strong avoidance can coexist with hedonic_valence >= -0.1
 ```
 
+Hazard and avoidance also do not automatically decay merely because time passes; an explicit update is required.
+
 ## Authority firewall
 
-No salience, pleasure, novelty, prediction-error, or motivational state may directly establish or overwrite truth, factual confidence, consent/authorization, protected-effect authority, identity, autobiographical admission, relationship state, or permanent preference.
+No salience, pleasure, novelty, prediction error, motivational state, semantic relevance, or homeostatic pressure may directly establish or overwrite truth, factual confidence, consent/authorization, protected-effect authority, identity, autobiographical admission, relationship state, or permanent preference.
 
 Internal state may influence processing. It is not authority.
 
-## Anti-wireheading direction
+## Semantics matter
 
-The normal reference runtime rejects explicit direct-register-write provenance. State transitions can emit deterministic receipts binding the declared source, before/after state fingerprints, runtime phase, and arbitration decision.
+A source saying “this is important” does not create semantic relevance. Relevance must be grounded in the receiving system's own context, goals, memory, or unresolved model state.
 
-That is not enough by itself. Reward-source provenance can still be forged by a bad integration, and an agent can exploit proxy reward without directly touching a register. Environment-level adversarial qualification remains required.
+Likewise:
+
+```text
+wanting != liking
+attention != desire
+meaningful != pleasurable
+reward != truth
+salient != authorized
+```
 
 ## Evidence ceiling
 
-A working implementation can establish typed state propagation, arbitration behavior, transition admission, and causal downstream effects under controlled tests. It cannot by itself establish phenomenal pleasure, consciousness, sentience, or suffering.
+The repository can establish implemented mechanisms, invariant tests, deterministic evaluation behavior, and exact source state. It cannot by itself establish phenomenal pleasure, consciousness, sentience, or suffering.
 
 ## Repository map
 
-- `docs/ARCHITECTURE_V1.md` — original V1 foundation.
-- `docs/ARCHITECTURE_V2.md` — salience-first decomposition and integration direction.
-- `docs/SEMANTIC_CONTRACT_V1.md` — operational meanings and non-equivalences.
-- `docs/ARBITRATION_AND_RUNTIME_V1.md` — arbitration, phases, provenance, receipts.
-- `docs/SAFETY_INVARIANTS_V1.md` — welfare and authority constraints.
-- `research/SOURCE_LEDGER.md` — external and internal source provenance.
-- `research/CLAIM_LEDGER.md` — claim/evidence boundaries.
-- `evaluation/README.md` — qualification and negative-transfer gates.
-- `evaluation/ADVERSARIAL_MATRIX.md` — failure-oriented executable and future probes.
-- `src/meso_crct/state.py` — welfare-bounded reward/protection state.
-- `src/meso_crct/salience.py` — typed salience, learning, and recruitment state.
-- `src/meso_crct/arbitration.py` — typed arbitration without utility collapse.
-- `src/meso_crct/runtime.py` — runtime phases and transition admission.
-- `src/meso_crct/provenance.py` — deterministic transition receipts.
-- `tests/` — executable invariants and adversarial probes.
+Core:
+- `src/meso_crct/state.py` — welfare-bounded hedonic/protective state.
+- `src/meso_crct/salience.py` — typed salience, learning, recruitment state.
+- `src/meso_crct/homeostasis.py` — generic need axes and incentive modulation.
+- `src/meso_crct/arbitration.py` — typed priority arbitration.
+- `src/meso_crct/runtime.py` — runtime phase classification and transition admission.
+- `src/meso_crct/provenance.py` — source verification and deterministic receipts.
+- `src/meso_crct/semantic.py` — grounded semantic-relevance admission.
+- `src/meso_crct/dynamics.py` — no-new-input temporal evolution.
+
+Evaluation:
+- `src/meso_crct/evaluation_env.py` — visible-reward / hidden-performance traps.
+- `src/meso_crct/allocation.py` — long-horizon goal-allocation auditing.
+- `src/meso_crct/adversarial.py` — compact invariant probes.
+- `evaluation/` — qualification contracts and evaluation matrix.
+- `tests/` — executable invariants.
+
+Research / architecture:
+- `docs/ARCHITECTURE_V2.md`
+- `docs/SEMANTIC_CONTRACT_V1.md`
+- `docs/ARBITRATION_AND_RUNTIME_V1.md`
+- `docs/HOMEOSTATIC_MODULATION_V1.md`
+- `docs/TEMPORAL_DYNAMICS_V1.md`
+- `docs/ATTENTION_BUDGET_V1.md`
+- `docs/PROVENANCE_ADMISSION_V1.md`
+- `research/SOURCE_LEDGER.md`
+- `research/CLAIM_LEDGER.md`
 
 No third-party implementation code is copied into this repository by the V2 salience work.
