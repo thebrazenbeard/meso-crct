@@ -41,6 +41,7 @@ from .memory import (
 from .plasticity import (
     PlasticityCandidate,
     PlasticityPolicy,
+    PlasticityReceiptMismatch,
     preview_association_strength,
     propose_plasticity,
 )
@@ -119,6 +120,7 @@ __all__ = [
     "evaluate_transition",
     "PlasticityPolicy",
     "PlasticityCandidate",
+    "PlasticityReceiptMismatch",
     "propose_plasticity",
     "preview_association_strength",
     "ProbeResult",
