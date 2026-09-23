@@ -37,14 +37,15 @@ The design goal is to let a synthetic system strongly protect itself without req
 
 ## Current development state
 
-The canonical `main` branch currently contains the repository protection/licensing shell and this orientation document.
+The canonical `main` branch contains the repository protection/licensing shell and this orientation document. The V1/V2 implementation is still intentionally isolated in stacked draft pull requests and has **not** been merged into canonical runtime.
 
-Active source work is intentionally isolated in draft pull requests:
+- **PR #2 — V1 foundation** — draft, based on `main`, exact head `812bd2634ce60fb8b14f9a75a3cbaa36cc35a863`. It contains the welfare-bounded hedonic state, independent hazard/avoidance channels, architecture contracts, tests, and CI.
+- **PR #3 — V2 salience/control architecture** — draft, stacked on PR #2, exact verified head `8316eb3c3a82705e227cb0c275877fae039ab75a`. It now includes typed appraisal/salience, arbitration and target selection, event/provenance receipts, bounded plasticity, versioned association memory, guarded recall, rolling allocation control, action-direction semantics, non-executable intent proposals, a canonical decision cycle, and evidence-governed negative-transfer quarantine/release.
+- **Current PR #3 validation** — Python 3.11 PASS, Python 3.12 PASS, with **218 tests passing** at the exact head above.
 
-- **PR #2 — V1 foundation:** welfare-bounded hedonic state, independent hazard/avoidance channels, architecture and tests.
-- **PR #3 — V2 salience architecture:** typed salience/relevance/learning/recruitment state, semantic contract, evidence/claim ledgers, and adversarial qualification direction.
+The V2 review system keeps evidence, assessment, recommendation, mutation, and execution authority separate. Counterexample/holdout evidence is bound to exact learned revisions; review evidence must be durably admitted; release requires distinct supportive holdout events under the reference policy; and review proposals become stale when evidence, learned revision, or review state changes.
 
-Those draft branches are research/build candidates, not merged canonical runtime.
+These draft branches are research/build candidates, not merged canonical runtime. No draft PR is implied to be deployed, installed, or active merely because it is documented here.
 
 ## Design boundaries
 
