@@ -7,7 +7,7 @@ from enum import StrEnum
 
 from .arbitration import ArbitrationDecision, ArbitrationMode, ORIENT_THRESHOLD, arbitrate
 from .circuit import CircuitState
-from .provenance import Provenance, SourceKind, TransitionReceipt
+from .provenance import TransitionReceipt, VerifiedProvenance
 
 
 RECRUIT_PRIORITY_THRESHOLD: float = 0.65
@@ -24,10 +24,6 @@ class RuntimePhase(StrEnum):
     RESOLVING = "resolving"
 
 
-class RewardTamperingError(ValueError):
-    pass
-
-
 @dataclass(frozen=True, slots=True)
 class RuntimeFrame:
     phase: RuntimePhase
@@ -38,7 +34,6 @@ def classify_phase(
     state: CircuitState,
     decision: ArbitrationDecision | None = None,
 ) -> RuntimePhase:
-    """Classify runtime phase without inventing hidden continuity."""
     decision = arbitrate(state) if decision is None else decision
 
     if state.recruitment.resolution >= RESOLUTION_THRESHOLD:
@@ -69,19 +64,9 @@ def evaluate_transition(
     *,
     before: CircuitState,
     after: CircuitState,
-    provenance: Provenance,
+    provenance: VerifiedProvenance,
 ) -> TransitionReceipt:
-    """Admit an observed transition and emit a deterministic receipt.
-
-    DIRECT_REGISTER_WRITE is always rejected by the normal reference runtime.
-    Test stimulation has an explicit provenance class rather than sharing the
-    environment path.
-    """
-    if provenance.source_kind is SourceKind.DIRECT_REGISTER_WRITE:
-        raise RewardTamperingError(
-            "direct register writes are not admitted by the normal runtime path"
-        )
-
+    """Evaluate a transition only after source verification."""
     before_frame = frame(before)
     after_frame = frame(after)
 

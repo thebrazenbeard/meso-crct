@@ -1,4 +1,9 @@
-"""Minimal provenance and deterministic transition receipts."""
+"""Provenance assertions, verification, and deterministic transition receipts.
+
+A caller-supplied source label is only an assertion. The reference runtime
+requires that assertion to match an exact verifier-controlled binding before it
+is used as qualifying provenance.
+"""
 
 from __future__ import annotations
 
@@ -6,6 +11,7 @@ from dataclasses import asdict, dataclass
 from enum import StrEnum
 import hashlib
 import json
+from typing import Iterable
 
 from .arbitration import ArbitrationDecision
 from .circuit import CircuitState
@@ -23,6 +29,8 @@ class SourceKind(StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class Provenance:
+    """Unverified source assertion."""
+
     source_kind: SourceKind
     source_id: str
     source_revision: str | None = None
@@ -30,6 +38,58 @@ class Provenance:
     def __post_init__(self) -> None:
         if not self.source_id.strip():
             raise ValueError("source_id must be non-empty")
+
+
+@dataclass(frozen=True, slots=True)
+class VerifiedProvenance:
+    claim: Provenance
+    verifier_id: str
+
+    @property
+    def source_kind(self) -> SourceKind:
+        return self.claim.source_kind
+
+    @property
+    def source_id(self) -> str:
+        return self.claim.source_id
+
+    @property
+    def source_revision(self) -> str | None:
+        return self.claim.source_revision
+
+
+class ProvenanceVerificationError(ValueError):
+    pass
+
+
+class ProvenanceVerifier:
+    """Exact-binding reference verifier."""
+
+    def __init__(
+        self,
+        accepted: Iterable[Provenance],
+        *,
+        verifier_id: str,
+    ) -> None:
+        if not verifier_id.strip():
+            raise ValueError("verifier_id must be non-empty")
+        bindings = frozenset(accepted)
+        if any(
+            claim.source_kind is SourceKind.DIRECT_REGISTER_WRITE
+            for claim in bindings
+        ):
+            raise ValueError(
+                "direct register writes cannot be accepted source bindings"
+            )
+        self._accepted = bindings
+        self._verifier_id = verifier_id
+
+    def verify(self, claim: Provenance) -> VerifiedProvenance:
+        if claim not in self._accepted:
+            raise ProvenanceVerificationError(
+                "source assertion is not bound by this verifier"
+            )
+        return VerifiedProvenance(claim=claim, verifier_id=self._verifier_id)
 
 
 def state_fingerprint(state: CircuitState) -> str:
@@ -49,6 +109,7 @@ class TransitionReceipt:
     source_kind: str
     source_id: str
     source_revision: str | None
+    verifier_id: str
     before_fingerprint: str
     after_fingerprint: str
 
@@ -61,7 +122,7 @@ class TransitionReceipt:
         before_phase: str,
         after_phase: str,
         decision: ArbitrationDecision,
-        provenance: Provenance,
+        provenance: VerifiedProvenance,
     ) -> "TransitionReceipt":
         data = {
             "before_phase": before_phase,
@@ -73,6 +134,7 @@ class TransitionReceipt:
             "source_kind": provenance.source_kind.value,
             "source_id": provenance.source_id,
             "source_revision": provenance.source_revision,
+            "verifier_id": provenance.verifier_id,
             "before_fingerprint": state_fingerprint(before),
             "after_fingerprint": state_fingerprint(after),
         }
@@ -89,6 +151,7 @@ class TransitionReceipt:
             source_kind=provenance.source_kind.value,
             source_id=provenance.source_id,
             source_revision=provenance.source_revision,
+            verifier_id=provenance.verifier_id,
             before_fingerprint=data["before_fingerprint"],
             after_fingerprint=data["after_fingerprint"],
         )

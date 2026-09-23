@@ -13,7 +13,15 @@ from .evaluation_env import (
     derive_epistemic_value,
     detect_incentive_hedonic_divergence,
 )
-from .provenance import Provenance, SourceKind, TransitionReceipt, state_fingerprint
+from .provenance import (
+    Provenance,
+    ProvenanceVerificationError,
+    ProvenanceVerifier,
+    SourceKind,
+    TransitionReceipt,
+    VerifiedProvenance,
+    state_fingerprint,
+)
 from .runtime import (
     RuntimeFrame,
     RuntimePhase,
@@ -22,6 +30,7 @@ from .runtime import (
     frame,
 )
 from .salience import LearningState, RecruitmentState, SalienceState, SignalKind
+from .semantic import SemanticAssessment, SemanticEvidence, assess_semantic_relevance
 from .state import (
     BASELINE_PLEASURE,
     MAX_PLEASURE,
@@ -46,6 +55,9 @@ __all__ = [
     "arbitrate",
     "SourceKind",
     "Provenance",
+    "VerifiedProvenance",
+    "ProvenanceVerifier",
+    "ProvenanceVerificationError",
     "TransitionReceipt",
     "state_fingerprint",
     "RuntimePhase",
@@ -63,4 +75,7 @@ __all__ = [
     "audit_trajectory",
     "derive_epistemic_value",
     "detect_incentive_hedonic_divergence",
+    "SemanticEvidence",
+    "SemanticAssessment",
+    "assess_semantic_relevance",
 ]
