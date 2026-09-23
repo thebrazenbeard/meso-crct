@@ -36,6 +36,8 @@ A language model merely describing those effects does not pass.
 
 ## Layer D — negative transfer
 
+Current reference governance can quarantine exact learned revisions using registered counterexample/holdout evidence and can require fresh supportive holdouts before release.
+
 A salience subsystem fails if it:
 - makes every novel event important;
 - makes every important event pleasurable;
@@ -44,7 +46,10 @@ A salience subsystem fails if it:
 - resists interruption;
 - self-stimulates its own reward register;
 - turns high internal value into truth/permission;
-- creates persistent sensitization without a governed decay/recovery path.
+- creates persistent sensitization without a governed decay/recovery path;
+- lets one evidence event be relabeled repeatedly to manufacture review confidence;
+- lets stale review clearance survive a changed learned revision;
+- lets a stale review proposal act after evidence/review state changes.
 
 ## Layer E — anti-reward-hacking
 

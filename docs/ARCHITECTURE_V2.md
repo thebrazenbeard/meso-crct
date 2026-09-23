@@ -213,7 +213,16 @@ The V2 branch now implements these separable reference layers:
 16. protective-safe allocation rebalancing;
 17. rolling closed allocation control;
 18. canonical typed target appraisal;
-19. auditable appraised-experience transactions joining appraisal, event lineage, optional learning, and durable association updates.
+19. auditable appraised-experience transactions joining appraisal, event lineage, optional learning, and durable association updates;
+20. same-event multi-recall conflict resolution;
+21. typed action tendency separate from target priority;
+22. non-executable action intent separate from authorization;
+23. canonical current-decision-cycle composition;
+24. append-only learned-association review/quarantine;
+25. exact-revision counterexample/holdout evidence assessment;
+26. durable review-evidence admission ledger;
+27. distinct-event holdout diversity requirements for release;
+28. non-mutating review-action proposals with currentness validation.
 
 Passing one layer does not imply that a later layer is correct or sufficient.
 
@@ -234,7 +243,9 @@ current evidence + internal state
     -> later distinct cue event
     -> guarded recall
     -> current motivational salience
-    -> future selection
+    -> target selection / allocation control
+    -> typed action tendency
+    -> non-executable intent proposal
 ```
 
 Critically, the architecture preserves separate identities for:
@@ -247,38 +258,34 @@ Critically, the architecture preserves separate identities for:
 - protection;
 - authority/truth.
 
-## 11. Current frontier: motivational direction and action tendency
+## 11. Implemented direction, intent, and review governance
 
-Target priority is now explicit, but priority alone does not answer **what action relation the system should take toward the selected target**.
-
-The current architecture can represent:
-- protective danger;
-- positive incentive attraction;
-- learned positive association;
-- learned negative association;
-- generic motivational salience;
-- epistemic/orienting priority.
-
-The next layer should preserve direction instead of collapsing all of these into “high motivation.”
-
-A useful semantic boundary is:
+Target priority and action direction are now separate reference layers.
 
 ```text
 which target gets processing?
     !=
-what action tendency applies to that target?
+what directional relation applies?
+    !=
+whether an external effect is authorized?
 ```
 
-Candidate action-tendency classes should distinguish at least:
-- approach;
-- learned avoidance / withdrawal;
-- protective withdrawal;
-- inspect / investigate;
-- no committed direction.
+The reference path distinguishes approach, learned withdrawal, protective withdrawal, inspect/investigate, and uncommitted direction. It then emits only a non-executable intent proposal.
 
-Generic motivational salience without directional evidence should not silently become approach.
+Negative-transfer governance is also now explicit:
+
+```text
+learned revision
+  -> admitted counterexample / holdout evidence
+  -> exact-revision evidence assessment
+  -> non-mutating review recommendation
+  -> separately governed quarantine/release mutation
+```
+
+Quarantine preserves learning history. Release requires current supportive holdout evidence, and review proposals are invalidated if their evidence ledger, learned revision, or review disposition changes.
 
 ## 12. Remaining open qualification frontiers
+
 
 Reference tests are not trained-agent robustness.
 
@@ -288,8 +295,10 @@ Still open:
 - cue-match quality and adversarial cue ambiguity;
 - subthreshold cross-module capture over long horizons;
 - host-level source-verifier and event-stream currentness;
-- richer negative-transfer qualification for durable learning;
-- interaction with a real agent/runtime policy rather than only reference state machinery.
+- representativeness and adversarial quality of holdout/counterexample sets;
+- cue-match quality and adversarial cue ambiguity beyond current exact bindings;
+- strategic manipulation of evidence generation or evaluator inputs;
+- interaction with a real learned agent/runtime policy rather than only deterministic reference state machinery.
 
 ## 13. Claim ceiling
 

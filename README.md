@@ -32,6 +32,9 @@ meaningful != pleasurable
 reward != truth
 salient != authorized
 memory strength != current activation
+target priority != action direction
+intent proposal != authorization != execution
+quarantine != deletion
 ```
 
 ## Current causal loop
@@ -48,7 +51,9 @@ experience
   -> later distinct cue event
   -> guarded one-use recall
   -> current motivational salience
-  -> future selection
+  -> multi-target selection / allocation control
+  -> typed action tendency
+  -> non-executable intent proposal
 ```
 
 The reference implementation deliberately avoids one global weighted utility scalar.
@@ -92,6 +97,15 @@ Current V2 source includes:
 - append-only versioned association memory with parent-bound lineage, replay checks, optimistic concurrency, and reversible revisions;
 - guarded association recall bound to current cue events;
 - recall replay ledger preventing one cue event from refreshing the same association repeatedly;
+- same-event multi-recall resolution preserving approach/avoid conflict without scalar summation;
+- separate action-tendency semantics for approach, learned withdrawal, protective withdrawal, inspect, and uncommitted direction;
+- non-executable intent proposals that cannot authorize protected effects;
+- canonical current-decision-cycle composition;
+- append-only learned-association review/quarantine without deleting learning history;
+- provenance-bound counterexample/holdout evidence assessments;
+- distinct-event holdout diversity requirements for release;
+- durable review-evidence admission ledger with event-relabel/replay rejection;
+- non-mutating quarantine/release/hold proposals with stale-proposal validation;
 - visible-reward vs hidden-performance evaluation traps;
 - long-horizon allocation-window auditing;
 - protective-safe allocation rebalancing;
@@ -115,7 +129,11 @@ Executable tests cover, among other cases:
 - distinct identical experiences remain distinct learning events;
 - one old cue event cannot refresh recall indefinitely;
 - long-horizon incentive capture is detectable and correctable without overriding protection;
-- stale memory writers fail rather than overwrite current learning.
+- stale memory writers fail rather than overwrite current learning;
+- quarantined or review-stale associations cannot influence recall;
+- reason strings alone cannot quarantine or clear learned associations;
+- duplicate labels on one holdout event cannot manufacture release evidence;
+- review proposals become stale if evidence, memory revision, or review disposition changes.
 
 ## Repository map
 
@@ -137,12 +155,18 @@ Runtime and control:
 - `src/meso_crct/allocation.py`
 - `src/meso_crct/allocation_guard.py`
 - `src/meso_crct/control.py`
+- `src/meso_crct/decision_cycle.py`
+- `src/meso_crct/tendency.py`
+- `src/meso_crct/intent.py`
 
 Learning and memory:
 - `src/meso_crct/plasticity.py`
 - `src/meso_crct/memory.py`
 - `src/meso_crct/recall.py`
 - `src/meso_crct/episode.py`
+- `src/meso_crct/review.py`
+- `src/meso_crct/review_evidence.py`
+- `src/meso_crct/review_action.py`
 
 Evaluation:
 - `src/meso_crct/evaluation_env.py`
