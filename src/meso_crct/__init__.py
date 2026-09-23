@@ -15,6 +15,12 @@ from .allocation_guard import (
 )
 from .arbitration import ArbitrationDecision, ArbitrationMode, arbitrate
 from .circuit import CircuitState
+from .control import (
+    ControlPolicy,
+    ControlState,
+    ControlStepResult,
+    control_step,
+)
 from .dynamics import DynamicsConfig, advance_without_input, decay_toward
 from .events import EventIdentity, EventSequencer
 from .evaluation_env import (
@@ -104,6 +110,10 @@ __all__ = [
     "LearningState",
     "RecruitmentState",
     "CircuitState",
+    "ControlPolicy",
+    "ControlState",
+    "ControlStepResult",
+    "control_step",
     "EventIdentity",
     "EventSequencer",
     "DynamicsConfig",
