@@ -28,10 +28,12 @@ from .homeostasis import (
     modulate_incentive_salience,
 )
 from .memory import (
+    AssociationIntegrityError,
     AssociationMemory,
     AssociationNotFound,
     AssociationRevision,
     MemoryVersionConflict,
+    PlasticityNoOpError,
     PlasticityReplayError,
     apply_candidate,
     revert_last,
@@ -90,7 +92,9 @@ __all__ = [
     "AssociationRevision",
     "AssociationMemory",
     "AssociationNotFound",
+    "AssociationIntegrityError",
     "MemoryVersionConflict",
+    "PlasticityNoOpError",
     "PlasticityReplayError",
     "apply_candidate",
     "revert_last",
