@@ -101,6 +101,12 @@ from .selection import (
     select_target,
 )
 from .semantic import SemanticAssessment, SemanticEvidence, assess_semantic_relevance
+from .tendency import (
+    ActionTendency,
+    ActionTendencyKind,
+    ActionTendencyPolicy,
+    derive_action_tendency,
+)
 from .state import (
     BASELINE_PLEASURE,
     MAX_PLEASURE,
@@ -188,6 +194,10 @@ __all__ = [
     "TargetEvaluation",
     "SelectionResult",
     "select_target",
+    "ActionTendencyKind",
+    "ActionTendencyPolicy",
+    "ActionTendency",
+    "derive_action_tendency",
     "ProbeResult",
     "run_reference_probes",
     "EvalAction",
