@@ -57,7 +57,8 @@ V2 now contains executable reference mechanisms for:
 - reward-loop, novelty, interruptibility, and sensitization probes;
 - long-horizon attention-budget / goal-crowd-out auditing;
 - homeostatic deficit -> target-specific incentive modulation;
-- explicit no-new-input temporal decay.
+- explicit no-new-input temporal decay;
+- bounded, receipt-bound plasticity candidates for association learning.
 
 ## Non-negotiable welfare invariant
 
@@ -111,6 +112,7 @@ Core:
 - `src/meso_crct/provenance.py` — source verification and deterministic receipts.
 - `src/meso_crct/semantic.py` — grounded semantic-relevance admission.
 - `src/meso_crct/dynamics.py` — no-new-input temporal evolution.
+- `src/meso_crct/plasticity.py` — bounded persistent-learning proposals.
 
 Evaluation:
 - `src/meso_crct/evaluation_env.py` — visible-reward / hidden-performance traps.
@@ -127,6 +129,7 @@ Research / architecture:
 - `docs/TEMPORAL_DYNAMICS_V1.md`
 - `docs/ATTENTION_BUDGET_V1.md`
 - `docs/PROVENANCE_ADMISSION_V1.md`
+- `docs/PLASTICITY_V1.md`
 - `research/SOURCE_LEDGER.md`
 - `research/CLAIM_LEDGER.md`
 

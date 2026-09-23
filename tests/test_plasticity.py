@@ -6,6 +6,7 @@ from meso_crct import (
     PlasticityPolicy,
     Provenance,
     ProvenanceVerifier,
+    RewardState,
     SalienceState,
     SourceKind,
     evaluate_transition,
@@ -94,6 +95,7 @@ def test_salience_below_gate_blocks_update():
 
 def test_pleasure_alone_does_not_create_permanent_preference_update():
     state = CircuitState(
+        reward=RewardState(pleasure=10.0),
         learning=LearningState(prediction_error=0.0),
     )
     candidate = propose_plasticity(

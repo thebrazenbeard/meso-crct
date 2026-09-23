@@ -37,4 +37,6 @@ States used here:
 | C-026 | Multiple weak needs should not automatically sum into extreme wanting. | TESTED_LOCAL | strongest-match reference rule |
 | C-027 | Transient salience/recruitment/learning state can decay explicitly without new input. | TESTED_LOCAL | host supplies half-lives |
 | C-028 | Hazard/avoidance should decay solely because time elapsed. | REJECTED_AS_COLLAPSE | reference dynamics keep them latched |
-| C-029 | Persistent memory/learning is equivalent to transient activation. | REJECTED_AS_COLLAPSE | plasticity/memory layer remains distinct and open |
+| C-029 | Persistent memory/learning is equivalent to transient activation. | REJECTED_AS_COLLAPSE | bounded plasticity proposals are distinct from transient state |
+| C-030 | High pleasure alone should directly create permanent preference. | REJECTED_AS_COLLAPSE | reference plasticity requires an explicit teaching signal |
+| C-031 | Bounded association-update candidates can be tied to verified transition receipts. | TESTED_LOCAL | proposal/preview only; durable memory ownership remains separate |
