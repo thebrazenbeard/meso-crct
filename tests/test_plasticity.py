@@ -2,6 +2,7 @@ import pytest
 
 from meso_crct import (
     CircuitState,
+    EventSequencer,
     LearningState,
     PlasticityCandidate,
     PlasticityPolicy,
@@ -28,7 +29,13 @@ def receipt_for(state):
         [claim],
         verifier_id="plasticity-test-verifier",
     ).verify(claim)
-    return evaluate_transition(before=before, after=state, provenance=verified)
+    _, event = EventSequencer("plasticity-test-stream").issue()
+    return evaluate_transition(
+        before=before,
+        after=state,
+        provenance=verified,
+        event=event,
+    )
 
 
 def policy():

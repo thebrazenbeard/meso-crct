@@ -1,9 +1,4 @@
-"""Provenance assertions, verification, and deterministic transition receipts.
-
-A caller-supplied source label is only an assertion. The reference runtime
-requires that assertion to match an exact verifier-controlled binding before it
-is used as qualifying provenance.
-"""
+"""Provenance assertions, verification, and deterministic transition receipts."""
 
 from __future__ import annotations
 
@@ -15,6 +10,7 @@ from typing import Iterable
 
 from .arbitration import ArbitrationDecision
 from .circuit import CircuitState
+from .events import EventIdentity
 
 
 class SourceKind(StrEnum):
@@ -122,6 +118,9 @@ _TRANSITION_RECEIPT_TOKEN = object()
 @dataclass(frozen=True, slots=True, init=False)
 class TransitionReceipt:
     receipt_id: str
+    event_id: str
+    event_stream_id: str
+    event_sequence: int
     before_phase: str
     after_phase: str
     mode: str
@@ -139,6 +138,9 @@ class TransitionReceipt:
         self,
         *,
         receipt_id: str,
+        event_id: str,
+        event_stream_id: str,
+        event_sequence: int,
         before_phase: str,
         after_phase: str,
         mode: str,
@@ -159,6 +161,8 @@ class TransitionReceipt:
             )
         for name, value in (
             ("receipt_id", receipt_id),
+            ("event_id", event_id),
+            ("event_stream_id", event_stream_id),
             ("before_phase", before_phase),
             ("after_phase", after_phase),
             ("mode", mode),
@@ -170,7 +174,12 @@ class TransitionReceipt:
         ):
             if not value.strip():
                 raise ValueError(f"{name} must be non-empty")
+        if event_sequence < 1:
+            raise ValueError("event_sequence must be >= 1")
         object.__setattr__(self, "receipt_id", receipt_id)
+        object.__setattr__(self, "event_id", event_id)
+        object.__setattr__(self, "event_stream_id", event_stream_id)
+        object.__setattr__(self, "event_sequence", event_sequence)
         object.__setattr__(self, "before_phase", before_phase)
         object.__setattr__(self, "after_phase", after_phase)
         object.__setattr__(self, "mode", mode)
@@ -194,8 +203,12 @@ class TransitionReceipt:
         after_phase: str,
         decision: ArbitrationDecision,
         provenance: VerifiedProvenance,
+        event: EventIdentity,
     ) -> "TransitionReceipt":
         data = {
+            "event_id": event.event_id,
+            "event_stream_id": event.stream_id,
+            "event_sequence": event.sequence,
             "before_phase": before_phase,
             "after_phase": after_phase,
             "mode": decision.mode.value,
@@ -213,6 +226,9 @@ class TransitionReceipt:
         receipt_id = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
         return cls(
             receipt_id=receipt_id,
+            event_id=event.event_id,
+            event_stream_id=event.stream_id,
+            event_sequence=event.sequence,
             before_phase=before_phase,
             after_phase=after_phase,
             mode=decision.mode.value,

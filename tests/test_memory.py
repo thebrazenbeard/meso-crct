@@ -6,6 +6,7 @@ from meso_crct import (
     AssociationNotFound,
     AssociationRevision,
     CircuitState,
+    EventSequencer,
     LearningState,
     MemoryVersionConflict,
     PlasticityNoOpError,
@@ -41,10 +42,12 @@ def state_and_receipt(
         [claim],
         verifier_id="memory-test-verifier",
     ).verify(claim)
+    _, event = EventSequencer(source_id).issue()
     receipt = evaluate_transition(
         before=CircuitState(),
         after=state,
         provenance=verified,
+        event=event,
     )
     return state, receipt
 

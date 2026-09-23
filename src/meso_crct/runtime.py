@@ -7,6 +7,7 @@ from enum import StrEnum
 
 from .arbitration import ArbitrationDecision, ArbitrationMode, ORIENT_THRESHOLD, arbitrate
 from .circuit import CircuitState
+from .events import EventIdentity
 from .provenance import TransitionReceipt, VerifiedProvenance
 
 
@@ -65,8 +66,9 @@ def evaluate_transition(
     before: CircuitState,
     after: CircuitState,
     provenance: VerifiedProvenance,
+    event: EventIdentity,
 ) -> TransitionReceipt:
-    """Evaluate a transition only after source verification."""
+    """Evaluate one distinct runtime event and emit its receipt."""
     before_frame = frame(before)
     after_frame = frame(after)
 
@@ -77,4 +79,5 @@ def evaluate_transition(
         after_phase=after_frame.phase.value,
         decision=after_frame.decision,
         provenance=provenance,
+        event=event,
     )

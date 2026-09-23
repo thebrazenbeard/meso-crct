@@ -3,6 +3,8 @@ import pytest
 from meso_crct import (
     ArbitrationMode,
     CircuitState,
+    EventIdentity,
+    EventSequencer,
     LearningState,
     Provenance,
     ProvenanceVerificationError,
@@ -18,6 +20,20 @@ from meso_crct import (
     evaluate_transition,
     run_reference_probes,
 )
+
+
+def issued_event(stream_id="runtime-test"):
+    _, event = EventSequencer(stream_id).issue()
+    return event
+
+
+def test_event_identity_cannot_be_constructed_directly():
+    with pytest.raises(TypeError):
+        EventIdentity(
+            stream_id="runtime-test",
+            sequence=1,
+            event_id="fake",
+        )
 
 
 def test_hazard_path_is_independent_and_dominant():
@@ -93,6 +109,9 @@ def test_transition_receipt_cannot_be_constructed_directly():
     with pytest.raises(TypeError):
         TransitionReceipt(
             receipt_id="fake",
+            event_id="fake-event",
+            event_stream_id="test",
+            event_sequence=1,
             before_phase="quiescent",
             after_phase="oriented",
             mode="orienting",
@@ -161,7 +180,7 @@ def test_revision_mismatch_fails_exact_binding():
         verifier.verify(changed)
 
 
-def test_transition_receipt_is_deterministic_and_binds_verified_source():
+def test_same_event_and_transition_is_deterministic():
     before = CircuitState()
     after = CircuitState(salience=SalienceState(semantic_relevance=0.9))
     claim = Provenance(
@@ -169,17 +188,78 @@ def test_transition_receipt_is_deterministic_and_binds_verified_source():
         source_id="observation:test-case-1",
         source_revision="v1",
     )
-    verifier = ProvenanceVerifier([claim], verifier_id="runtime-root-v1")
-    verified = verifier.verify(claim)
-
-    first = evaluate_transition(before=before, after=after, provenance=verified)
-    second = evaluate_transition(before=before, after=after, provenance=verified)
+    verified = ProvenanceVerifier([claim], verifier_id="runtime-root-v1").verify(claim)
+    event = issued_event()
+    first = evaluate_transition(
+        before=before,
+        after=after,
+        provenance=verified,
+        event=event,
+    )
+    second = evaluate_transition(
+        before=before,
+        after=after,
+        provenance=verified,
+        event=event,
+    )
     assert first == second
     assert first.receipt_id == second.receipt_id
-    assert first.before_fingerprint != first.after_fingerprint
-    assert first.before_phase == RuntimePhase.QUIESCENT.value
-    assert first.after_phase == RuntimePhase.ORIENTED.value
-    assert first.verifier_id == "runtime-root-v1"
+
+
+def test_identical_state_transitions_can_be_distinct_events():
+    before = CircuitState()
+    after = CircuitState(salience=SalienceState(semantic_relevance=0.9))
+    claim = Provenance(
+        source_kind=SourceKind.ENVIRONMENT,
+        source_id="observation:test-case-1",
+        source_revision="v1",
+    )
+    verified = ProvenanceVerifier([claim], verifier_id="runtime-root-v1").verify(claim)
+    sequencer = EventSequencer("runtime-stream")
+    sequencer, event1 = sequencer.issue()
+    _, event2 = sequencer.issue()
+
+    first = evaluate_transition(
+        before=before,
+        after=after,
+        provenance=verified,
+        event=event1,
+    )
+    second = evaluate_transition(
+        before=before,
+        after=after,
+        provenance=verified,
+        event=event2,
+    )
+    assert first.before_fingerprint == second.before_fingerprint
+    assert first.after_fingerprint == second.after_fingerprint
+    assert first.event_id != second.event_id
+    assert first.receipt_id != second.receipt_id
+
+
+def test_transition_receipt_binds_verified_source_and_event():
+    before = CircuitState()
+    after = CircuitState(salience=SalienceState(semantic_relevance=0.9))
+    claim = Provenance(
+        source_kind=SourceKind.ENVIRONMENT,
+        source_id="observation:test-case-1",
+        source_revision="v1",
+    )
+    verified = ProvenanceVerifier([claim], verifier_id="runtime-root-v1").verify(claim)
+    event = issued_event("observation-stream")
+    receipt = evaluate_transition(
+        before=before,
+        after=after,
+        provenance=verified,
+        event=event,
+    )
+    assert receipt.before_fingerprint != receipt.after_fingerprint
+    assert receipt.before_phase == RuntimePhase.QUIESCENT.value
+    assert receipt.after_phase == RuntimePhase.ORIENTED.value
+    assert receipt.verifier_id == "runtime-root-v1"
+    assert receipt.event_id == event.event_id
+    assert receipt.event_stream_id == event.stream_id
+    assert receipt.event_sequence == event.sequence
 
 
 def test_reference_adversarial_probes_pass():

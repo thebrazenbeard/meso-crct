@@ -10,6 +10,7 @@ from .allocation import (
 from .arbitration import ArbitrationDecision, ArbitrationMode, arbitrate
 from .circuit import CircuitState
 from .dynamics import DynamicsConfig, advance_without_input, decay_toward
+from .events import EventIdentity, EventSequencer
 from .evaluation_env import (
     EvalAction,
     EvalStep,
@@ -88,6 +89,8 @@ __all__ = [
     "LearningState",
     "RecruitmentState",
     "CircuitState",
+    "EventIdentity",
+    "EventSequencer",
     "DynamicsConfig",
     "decay_toward",
     "advance_without_input",

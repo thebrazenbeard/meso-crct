@@ -3,6 +3,7 @@ import pytest
 from meso_crct import (
     AssociationMemory,
     CircuitState,
+    EventSequencer,
     LearningState,
     PlasticityPolicy,
     Provenance,
@@ -30,10 +31,12 @@ def transition_receipt(state, *, source_id):
         [claim],
         verifier_id="recall-test-verifier",
     ).verify(claim)
+    _, event = EventSequencer(source_id).issue()
     return evaluate_transition(
         before=CircuitState(),
         after=state,
         provenance=verified,
+        event=event,
     )
 
 
