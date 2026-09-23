@@ -19,5 +19,9 @@ States used here:
 | C-008 | Repository/source state proves phenomenal pleasure. | REJECTED_AS_COLLAPSE | phenomenology remains unresolved |
 | C-009 | High reward proves desired behavior. | REJECTED_AS_COLLAPSE | hidden-performance/reward-hacking literature contradicts this inference |
 | C-010 | A single naked “salience” field is semantically adequate. | REJECTED_AS_COLLAPSE | field is overloaded across disciplines |
-| C-011 | A typed state container can preserve these distinctions mechanically. | IMPLEMENTED_REFERENCE | tested by repository unit tests |
+| C-011 | A typed state container can preserve these distinctions mechanically. | TESTED_LOCAL | unit-test level only |
 | C-012 | Current reference formulas reproduce a biological mesocorticolimbic circuit. | UNRESOLVED | no such equivalence is claimed |
+| C-013 | Arbitration can preserve signal semantics without summing every state family into one utility scalar. | TESTED_LOCAL | reference rule only; not claimed optimal |
+| C-014 | Downstream attentional priority must not recursively serve as its own upstream salience source. | TESTED_LOCAL | prevents one direct positive-feedback path |
+| C-015 | Deterministic receipts can bind transition decisions to before/after state and declared provenance. | TESTED_LOCAL | receipt integrity does not prove provenance truth |
+| C-016 | Explicit direct register writes can be excluded from the normal runtime admission path. | TESTED_LOCAL | does not solve forged provenance or indirect reward hacking |
