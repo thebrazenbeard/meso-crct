@@ -81,16 +81,16 @@ def test_generic_motivation_stays_hold():
 def test_weak_direction_below_policy_gate_stays_hold():
     tendency = tendency_for(
         CircuitState(
-            salience=SalienceState(incentive_salience=0.15),
+            salience=SalienceState(incentive_salience=0.30),
         )
     )
     intent = propose_action_intent(
         tendency,
-        policy=IntentPolicy(minimum_committed_strength=0.2),
+        policy=IntentPolicy(minimum_committed_strength=0.50),
     )
     assert tendency.kind is ActionTendencyKind.APPROACH
     assert intent.kind is IntentKind.HOLD
-    assert intent.strength == pytest.approx(0.15)
+    assert intent.strength == pytest.approx(0.30)
 
 
 def test_no_selection_produces_hold_without_target():
