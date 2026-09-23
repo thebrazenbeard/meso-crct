@@ -14,12 +14,18 @@ from .allocation import GoalObligation
 from .appraisal import AppraisedTarget
 from .control import ControlPolicy, ControlState, ControlStepResult, control_step
 from .intent import IntentPolicy, IntentProposal, propose_action_intent
+from .memory import AssociationMemory
 from .provenance import state_fingerprint
 from .recall import RecallInfluence, RecallLedger, apply_recall_motivation
 from .recall_resolution import (
     RecallResolution,
     RecallResolutionPolicy,
     resolve_recall_influences,
+)
+from .review import (
+    AssociationQuarantinedError,
+    AssociationReviewStaleError,
+    ReviewAdmission,
 )
 from .selection import TargetState
 from .tendency import (
@@ -33,9 +39,14 @@ class RecallStateMismatch(ValueError):
     pass
 
 
+class RecallMemoryMismatch(ValueError):
+    pass
+
+
 @dataclass(frozen=True, slots=True)
 class TargetRecallBinding:
     target_id: str
+    memory: AssociationMemory
     influences: tuple[RecallInfluence, ...]
 
     def __post_init__(self) -> None:
@@ -120,6 +131,39 @@ def run_decision_cycle(
             if influence.cue_after_fingerprint != current_fingerprint:
                 raise RecallStateMismatch(
                     "recall cue receipt does not match current appraised target state"
+                )
+
+            current_revision = binding.memory.current(influence.association_id)
+            if (
+                current_revision is None
+                or current_revision.revision_id != influence.memory_revision_id
+            ):
+                raise RecallMemoryMismatch(
+                    "recall influence does not match current association revision"
+                )
+
+            admission = binding.memory.reviews.admission(
+                association_id=influence.association_id,
+                memory_revision_id=current_revision.revision_id,
+            )
+            if admission is ReviewAdmission.QUARANTINED:
+                raise AssociationQuarantinedError(
+                    f"association is quarantined: {influence.association_id}"
+                )
+            if admission is ReviewAdmission.STALE:
+                raise AssociationReviewStaleError(
+                    f"association review is stale: {influence.association_id}"
+                )
+
+            review_record = binding.memory.reviews.current(
+                influence.association_id
+            )
+            expected_review_id = (
+                None if review_record is None else review_record.review_id
+            )
+            if influence.review_record_id != expected_review_id:
+                raise RecallMemoryMismatch(
+                    "recall influence review snapshot is no longer current"
                 )
 
         resolution = resolve_recall_influences(

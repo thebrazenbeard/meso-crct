@@ -15,6 +15,8 @@ from meso_crct import (
     PlasticityPolicy,
     Provenance,
     ProvenanceVerifier,
+    AssociationQuarantinedError,
+    RecallMemoryMismatch,
     RecallReplayError,
     RecallStateMismatch,
     RewardState,
@@ -27,7 +29,9 @@ from meso_crct import (
     build_target_appraisal,
     evaluate_transition,
     propose_plasticity,
+    quarantine_association,
     recall_association,
+    release_association,
     run_decision_cycle,
 )
 
@@ -50,6 +54,7 @@ def recall_for_current_appraisal(
     *,
     prediction_error,
     current_event,
+    memory=None,
 ):
     learning_state = CircuitState(
         salience=SalienceState(semantic_relevance=1.0),
@@ -71,10 +76,11 @@ def recall_for_current_appraisal(
             minimum_salience_gate=0.0,
         ),
     )
+    memory = AssociationMemory() if memory is None else memory
     memory = apply_candidate(
-        AssociationMemory(),
+        memory,
         candidate,
-        expected_version=0,
+        expected_version=memory.current_version(association_id),
     )
     cue_receipt = evaluate_transition(
         before=CircuitState(),
@@ -82,12 +88,13 @@ def recall_for_current_appraisal(
         provenance=verified("current-cue"),
         event=current_event,
     )
-    return recall_association(
+    influence = recall_association(
         memory=memory,
         association_id=association_id,
         cue_match=1.0,
         cue_receipt=cue_receipt,
     )
+    return memory, influence
 
 
 def cue_appraisal(target_id="cue-target"):
@@ -102,7 +109,7 @@ def cue_appraisal(target_id="cue-target"):
 def test_negative_recall_flows_to_non_executable_withdraw_intent():
     cue = cue_appraisal()
     _, event = EventSequencer("current-cue-stream").issue()
-    recall = recall_for_current_appraisal(
+    memory, recall = recall_for_current_appraisal(
         cue,
         "bad-outcome",
         prediction_error=-0.8,
@@ -120,7 +127,7 @@ def test_negative_recall_flows_to_non_executable_withdraw_intent():
         DecisionCycleState(),
         [cue, distractor],
         recall_bindings=[
-            TargetRecallBinding("cue-target", (recall,))
+            TargetRecallBinding("cue-target", memory, (recall,))
         ],
     )
 
@@ -137,17 +144,18 @@ def test_negative_recall_flows_to_non_executable_withdraw_intent():
 def test_conflicting_recall_becomes_hold_intent():
     cue = cue_appraisal()
     _, event = EventSequencer("current-cue-stream").issue()
-    positive = recall_for_current_appraisal(
+    shared_memory, positive = recall_for_current_appraisal(
         cue,
         "positive",
         prediction_error=0.8,
         current_event=event,
     )
-    negative = recall_for_current_appraisal(
+    shared_memory, negative = recall_for_current_appraisal(
         cue,
         "negative",
         prediction_error=-0.75,
         current_event=event,
+        memory=shared_memory,
     )
 
     _, result = run_decision_cycle(
@@ -156,6 +164,7 @@ def test_conflicting_recall_becomes_hold_intent():
         recall_bindings=[
             TargetRecallBinding(
                 "cue-target",
+                shared_memory,
                 (positive, negative),
             )
         ],
@@ -168,7 +177,7 @@ def test_conflicting_recall_becomes_hold_intent():
 def test_protection_overrides_positive_recall_in_cycle():
     attractive = cue_appraisal("attractive")
     _, event = EventSequencer("attractive-cue").issue()
-    positive = recall_for_current_appraisal(
+    positive_memory, positive = recall_for_current_appraisal(
         attractive,
         "positive",
         prediction_error=0.9,
@@ -188,7 +197,7 @@ def test_protection_overrides_positive_recall_in_cycle():
         DecisionCycleState(),
         [attractive, danger],
         recall_bindings=[
-            TargetRecallBinding("attractive", (positive,))
+            TargetRecallBinding("attractive", positive_memory, (positive,))
         ],
     )
 
@@ -255,7 +264,7 @@ def test_allocation_guard_is_part_of_canonical_cycle():
 def test_reusing_same_recall_event_in_later_cycle_fails():
     cue = cue_appraisal()
     _, event = EventSequencer("current-cue-stream").issue()
-    recall = recall_for_current_appraisal(
+    memory, recall = recall_for_current_appraisal(
         cue,
         "same-event",
         prediction_error=0.8,
@@ -264,14 +273,14 @@ def test_reusing_same_recall_event_in_later_cycle_fails():
     updated, _ = run_decision_cycle(
         DecisionCycleState(),
         [cue],
-        recall_bindings=[TargetRecallBinding("cue-target", (recall,))],
+        recall_bindings=[TargetRecallBinding("cue-target", memory, (recall,))],
     )
 
     with pytest.raises(RecallReplayError):
         run_decision_cycle(
             updated,
             [cue],
-            recall_bindings=[TargetRecallBinding("cue-target", (recall,))],
+            recall_bindings=[TargetRecallBinding("cue-target", memory, (recall,))],
         )
 
 
@@ -284,7 +293,7 @@ def test_recall_receipt_must_match_current_appraised_state():
         )
     )
     _, event = EventSequencer("current-cue-stream").issue()
-    recall = recall_for_current_appraisal(
+    memory, recall = recall_for_current_appraisal(
         original,
         "mismatch",
         prediction_error=0.8,
@@ -295,14 +304,14 @@ def test_recall_receipt_must_match_current_appraised_state():
         run_decision_cycle(
             DecisionCycleState(),
             [changed],
-            recall_bindings=[TargetRecallBinding("cue-target", (recall,))],
+            recall_bindings=[TargetRecallBinding("cue-target", memory, (recall,))],
         )
 
 
 def test_unknown_recall_target_fails():
     cue = cue_appraisal()
     _, event = EventSequencer("current-cue-stream").issue()
-    recall = recall_for_current_appraisal(
+    memory, recall = recall_for_current_appraisal(
         cue,
         "unknown-target",
         prediction_error=0.8,
@@ -312,9 +321,121 @@ def test_unknown_recall_target_fails():
         run_decision_cycle(
             DecisionCycleState(),
             [cue],
-            recall_bindings=[TargetRecallBinding("other", (recall,))],
+            recall_bindings=[TargetRecallBinding("other", memory, (recall,))],
         )
 
+
+
+def test_precomputed_recall_is_blocked_if_memory_is_quarantined_afterward():
+    cue = cue_appraisal()
+    _, event = EventSequencer("quarantine-after-recall").issue()
+    memory, recall = recall_for_current_appraisal(
+        cue,
+        "quarantine-after",
+        prediction_error=0.8,
+        current_event=event,
+    )
+    quarantined = quarantine_association(
+        memory,
+        "quarantine-after",
+        reason="negative-transfer concern",
+    )
+
+    with pytest.raises(AssociationQuarantinedError):
+        run_decision_cycle(
+            DecisionCycleState(),
+            [cue],
+            recall_bindings=[
+                TargetRecallBinding(
+                    "cue-target",
+                    quarantined,
+                    (recall,),
+                )
+            ],
+        )
+
+
+def test_old_precomputed_recall_is_stale_after_review_state_changes():
+    cue = cue_appraisal()
+    _, event = EventSequencer("review-change-after-recall").issue()
+    memory, recall = recall_for_current_appraisal(
+        cue,
+        "review-change",
+        prediction_error=0.8,
+        current_event=event,
+    )
+    memory = quarantine_association(
+        memory,
+        "review-change",
+        reason="hold",
+    )
+    memory = release_association(
+        memory,
+        "review-change",
+        reason="cleared",
+    )
+
+    with pytest.raises(RecallMemoryMismatch):
+        run_decision_cycle(
+            DecisionCycleState(),
+            [cue],
+            recall_bindings=[
+                TargetRecallBinding(
+                    "cue-target",
+                    memory,
+                    (recall,),
+                )
+            ],
+        )
+
+
+def test_precomputed_recall_is_stale_after_association_revision_changes():
+    cue = cue_appraisal()
+    _, event = EventSequencer("memory-change-after-recall").issue()
+    memory, recall = recall_for_current_appraisal(
+        cue,
+        "memory-change",
+        prediction_error=0.6,
+        current_event=event,
+    )
+    learning_state = CircuitState(
+        salience=SalienceState(semantic_relevance=1.0),
+        learning=LearningState(prediction_error=0.2),
+    )
+    _, learning_event = EventSequencer("memory-change-second-learning").issue()
+    receipt = evaluate_transition(
+        before=CircuitState(),
+        after=learning_state,
+        provenance=verified("memory-change-second-learning"),
+        event=learning_event,
+    )
+    candidate = propose_plasticity(
+        state=learning_state,
+        association_id="memory-change",
+        receipt=receipt,
+        policy=PlasticityPolicy(
+            maximum_absolute_delta=1.0,
+            minimum_salience_gate=0.0,
+        ),
+    )
+    memory = apply_candidate(
+        memory,
+        candidate,
+        expected_version=1,
+    )
+
+    with pytest.raises(RecallMemoryMismatch):
+        run_decision_cycle(
+            DecisionCycleState(),
+            [cue],
+            recall_bindings=[
+                TargetRecallBinding(
+                    "cue-target",
+                    memory,
+                    (recall,),
+                )
+            ],
+        )
 
 def test_duplicate_appraised_target_ids_fail():
     one = cue_appraisal("duplicate")

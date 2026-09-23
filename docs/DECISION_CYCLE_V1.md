@@ -5,6 +5,7 @@ The current decision path is composed by `run_decision_cycle()`.
 ```text
 canonical appraised targets
   + current cue-bound recalls
+  + memory/review snapshots that authorized those recalls
   + prior recall ledger
   + rolling allocation-control state
     -> verify recall belongs to current appraised state
@@ -31,6 +32,17 @@ the current canonical appraised state for that target.
 
 An old valid recall cannot therefore be attached to a different current
 appraisal merely because the target ID is convenient.
+
+The binding also carries the current `AssociationMemory` snapshot. Before
+applying a precomputed recall, the cycle verifies that:
+
+- the influence still names the current learned revision;
+- that revision is not quarantined or review-stale;
+- the influence's review-record ID still matches the current review record.
+
+A recall computed before quarantine/release or before a later learning revision
+is therefore rejected as stale rather than being allowed to bypass the newer
+memory governance state.
 
 ## Replay state
 

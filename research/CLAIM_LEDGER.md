@@ -69,3 +69,4 @@ States used here:
 | C-057 | A quarantined exact association revision can influence current recall. | REJECTED_AS_COLLAPSE | recall admission blocks quarantined revisions |
 | C-058 | A prior review remains automatically valid after the learned association changes. | REJECTED_AS_COLLAPSE | changed revision makes prior review stale and blocks recall |
 | C-059 | Releasing the current reviewed revision can restore recall without reconstructing or rewriting the learned association. | TESTED_LOCAL | append-only review record restores admission |
+| C-060 | A precomputed recall influence remains valid after its learned revision or review state changes. | REJECTED_AS_COLLAPSE | canonical decision cycle revalidates memory revision and review snapshot before applying recall |
