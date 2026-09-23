@@ -9,6 +9,10 @@ from .allocation import (
     audit_allocation_window,
     audit_attention_budget,
 )
+from .allocation_guard import (
+    AllocationGuardResult,
+    select_with_allocation_guard,
+)
 from .arbitration import ArbitrationDecision, ArbitrationMode, arbitrate
 from .circuit import CircuitState
 from .dynamics import DynamicsConfig, advance_without_input, decay_toward
@@ -128,6 +132,8 @@ __all__ = [
     "AllocationAudit",
     "audit_attention_budget",
     "audit_allocation_window",
+    "AllocationGuardResult",
+    "select_with_allocation_guard",
     "SourceKind",
     "Provenance",
     "VerifiedProvenance",
