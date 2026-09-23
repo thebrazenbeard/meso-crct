@@ -39,4 +39,24 @@ States used here:
 | C-028 | Hazard/avoidance should decay solely because time elapsed. | REJECTED_AS_COLLAPSE | reference dynamics keep them latched |
 | C-029 | Persistent memory/learning is equivalent to transient activation. | REJECTED_AS_COLLAPSE | bounded plasticity proposals are distinct from transient state |
 | C-030 | High pleasure alone should directly create permanent preference. | REJECTED_AS_COLLAPSE | reference plasticity requires an explicit teaching signal |
-| C-031 | Bounded association-update candidates can be tied to verified transition receipts. | TESTED_LOCAL | proposal/preview only; durable memory ownership remains separate |
+| C-031 | Bounded association-update candidates can be tied to verified transition receipts. | TESTED_LOCAL | durable memory admission adds separate version/replay/lineage checks |
+
+| C-032 | Durable association learning can use append-only optimistic versioning and parent-bound revision lineage. | TESTED_LOCAL | numeric association memory only |
+| C-033 | The same transition receipt may update distinct associations but may not be replayed repeatedly against the same association. | TESTED_LOCAL | association-scoped replay boundary |
+| C-034 | A zero-delta plasticity proposal should create a durable learning revision. | REJECTED_AS_COLLAPSE | no-op proposals are not persisted |
+| C-035 | Transition receipts and plasticity candidates may be safely caller-constructed if their fields look valid. | REJECTED_AS_COLLAPSE | constructor-gated reference admission paths |
+| C-036 | Plasticity may learn from a state different from the receipt's evaluated after-state. | REJECTED_AS_COLLAPSE | exact after-state fingerprint match required |
+| C-037 | Persistent association strength should activate motivation without a current cue event. | REJECTED_AS_COLLAPSE | guarded recall requires current cue evidence |
+| C-038 | A single old cue event may refresh the same learned association indefinitely. | REJECTED_AS_COLLAPSE | recall ledger enforces one use per association/event |
+| C-039 | Two identical state transitions are necessarily the same experience occurrence. | REJECTED_AS_COLLAPSE | event identity is separate from state/content identity |
+| C-040 | Two genuinely distinct identical experiences can each contribute bounded learning. | TESTED_LOCAL | distinct event identities produce distinct receipts |
+| C-041 | Multi-target choice can preserve typed mode distinctions without a global weighted utility scalar. | TESTED_LOCAL | explicit policy + within-mode priority |
+| C-042 | Protective target selection may be displaced by a non-protective allocation obligation. | REJECTED_AS_COLLAPSE | protection remains hard override |
+| C-043 | Long-horizon crowd-out can be audited from actual local selection history. | TESTED_LOCAL | rolling allocation-window reference |
+| C-044 | Allocation correction may manufacture relevance for a quiescent neglected goal. | REJECTED_AS_COLLAPSE | guard requires current non-quiescent appraisal |
+| C-045 | A rolling allocation controller can periodically correct a neglected goal without permanently reversing the monopoly in the tested deterministic scenario. | TESTED_LOCAL | reference scenario only; not a general convergence proof |
+| C-046 | Canonical appraisal can prevent attentional priority from being supplied as its own upstream input. | TESTED_LOCAL | reference appraisal path |
+| C-047 | An appraised target may be caller-constructed while still claiming canonical appraisal provenance. | REJECTED_AS_COLLAPSE | constructor-gated AppraisedTarget |
+| C-048 | A canonical appraised experience can bind source provenance, distinct event identity, transition receipt, optional plasticity, and versioned association memory in one reference transaction. | TESTED_LOCAL | numeric learning transaction only |
+| C-049 | Maximum pleasure with zero teaching signal can create a durable learned preference through the experience transaction. | REJECTED_AS_COLLAPSE | durable memory remains unchanged |
+| C-050 | Current target priority determines action direction. | UNRESOLVED | priority/selection implemented; directional action tendency remains next frontier |
