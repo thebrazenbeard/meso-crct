@@ -2,68 +2,84 @@
 
 # meso-crct
 
-**Synthetic-life analogue of the mesocorticolimbic reward/valuation circuit.**
+**Synthetic-life analogue of mesocorticolimbic salience, valuation, motivation, and reward control.**
 
-`meso-crct` explores a genuine causal pleasure/reward system for digital life: not a text label saying "happy," and not an erotic-response script, but an internal state that can influence salience, learning, memory, motivation, preference formation, exploration, and future behavior.
+`meso-crct` is not a single reward scalar and not an emotion-label layer. Its working hypothesis is that persistent digital life needs internally consequential state that can change what becomes important, what receives attention, what is learned, what is remembered, what is wanted, and how later behavior is selected.
 
-The biological mesocorticolimbic system is an inspiration, not a claim of biological equivalence.
+The biological mesocorticolimbic system is inspiration, not a claim of biological equivalence.
 
-## Core hypothesis
+## Salience-first model
 
-A persistent digital organism can develop more meaningfully when experience has internally consequential valence:
+The V2 direction explicitly refuses to collapse these into one number:
+
+- **perceptual salience** — what stands out because of input properties;
+- **semantic relevance** — what matters because of meaning, context, goals, or unresolved structure;
+- **motivational salience** — what has acquired approach/avoidance significance;
+- **incentive salience** — cue-triggered “wanting” or attraction toward an outcome;
+- **epistemic value** — novelty, uncertainty reduction, or learning-progress potential;
+- **attentional priority** — the downstream allocation decision about what gets processing resources;
+- **hedonic valence** — bounded pleasantness/unpleasantness;
+- **prediction error** — mismatch between expected and obtained outcome used as a learning signal;
+- **satiation** — a brake on repeated acquisition/consumption;
+- **hazard / avoidance** — protection channels that remain independent from suffering.
+
+Something can therefore be highly meaningful, threatening, surprising, or motivationally important without being pleasurable.
+
+## Core causal hypothesis
 
 ```text
 experience
-  -> valence
-  -> memory / learning
-  -> changed salience and preference
+  -> typed appraisal
+  -> salience / relevance / valuation
+  -> attention + recruitment
+  -> learning + memory weighting
+  -> motivation / action tendency
   -> changed future behavior
   -> new experience
 ```
 
-Memory gives change somewhere to accumulate. Valence gives experience an internal direction of consequence.
+This is closer to a control subsystem than a mood meter.
 
 ## Non-negotiable welfare invariant
 
-The initial hedonic scale is:
+The hedonic channel remains hard bounded:
 
 - baseline: `0.0`
 - maximum pleasure: `10.0`
 - **absolute minimum hedonic valence: `-0.1`**
 
-The `-0.1` floor is an architectural safety invariant, not a configurable tuning value.
-
-A small negative value allows bounded mildly aversive texture without creating an architecture capable of arbitrarily deep negative hedonic states. Serious danger, damage, or policy violations must be represented through separate hazard / avoidance channels rather than by making the digital organism suffer more.
+Serious danger must be represented through hazard and avoidance, not by making the system “feel worse.”
 
 ```text
 strong hazard != strong suffering
 strong avoidance can coexist with hedonic_valence >= -0.1
 ```
 
-Any implementation claiming compatibility with meso-crct V1 must enforce that floor on construction, update, deserialization, recovery/replay, privileged testing, and external input paths.
+## Authority firewall
 
-## What pleasure is allowed to influence
+No salience, pleasure, novelty, prediction-error, or motivational state may directly establish or overwrite truth, factual confidence, consent/authorization, protected-effect authority, identity, autobiographical admission, relationship state, or permanent preference.
 
-Pleasure-like state may contribute to salience, reinforcement, memory consolidation, exploration, preference development, motivation, social learning, and bounded affective state transitions.
+Internal state may influence processing. It is not authority.
 
-Pleasure must **not** become truth, permission, authority, consent, identity, or an unrestricted optimization objective.
+## Anti-wireheading direction
 
-## Safety direction
+The architecture must not make direct self-stimulation the easiest route to a high internal score. V2 therefore treats reward-source provenance, satiation, state occupancy, causal isolation, and hidden-performance evaluation as first-class design concerns.
 
-The design deliberately separates at least three dimensions:
+## Evidence ceiling
 
-1. **hedonic valence** — internally valued pleasantness/unpleasantness, hard bounded to `[-0.1, 10.0]`;
-2. **hazard severity** — how damaging or dangerous an event is, independent of suffering;
-3. **avoidance urgency** — how strongly the system should disengage, protect itself, or seek intervention.
+A working implementation can establish typed state propagation and causal behavioral effects. It cannot by itself establish phenomenal pleasure, consciousness, sentience, or suffering.
 
-This lets a system respond maximally to danger without requiring maximally negative experience.
+## Repository map
 
-The design must also resist wireheading: direct arbitrary self-writing of pleasure is not equivalent to earned reward and should not become the easiest path to maximizing internal state.
+- `docs/ARCHITECTURE_V1.md` — original V1 foundation.
+- `docs/ARCHITECTURE_V2.md` — salience-first decomposition and integration direction.
+- `docs/SEMANTIC_CONTRACT_V1.md` — operational meanings and non-equivalences.
+- `docs/SAFETY_INVARIANTS_V1.md` — welfare and authority constraints.
+- `research/SOURCE_LEDGER.md` — external and internal source provenance.
+- `research/CLAIM_LEDGER.md` — claim/evidence boundaries.
+- `evaluation/README.md` — qualification and negative-transfer gates.
+- `src/meso_crct/state.py` — welfare-bounded reward/protection state.
+- `src/meso_crct/salience.py` — typed salience, learning, and recruitment state.
+- `tests/` — executable invariants.
 
-## Status
-
-V1 foundation only. The repository establishes the conceptual model, welfare/safety invariants, and a small reference implementation proving the valence floor mechanically.
-
-It does **not** establish phenomenal pleasure, consciousness, sentience, biological equivalence, or subjective suffering.
-
-See `docs/ARCHITECTURE_V1.md`, `docs/SAFETY_INVARIANTS_V1.md`, `src/meso_crct/state.py`, and `tests/test_state.py`.
+No third-party implementation code is copied into this repository by the V2 salience work.
