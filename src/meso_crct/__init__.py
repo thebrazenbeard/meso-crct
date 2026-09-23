@@ -54,6 +54,12 @@ from .provenance import (
     VerifiedProvenance,
     state_fingerprint,
 )
+from .recall import (
+    RecallDirection,
+    RecallInfluence,
+    apply_recall_motivation,
+    recall_association,
+)
 from .runtime import (
     RuntimeFrame,
     RuntimePhase,
@@ -123,6 +129,10 @@ __all__ = [
     "PlasticityReceiptMismatch",
     "propose_plasticity",
     "preview_association_strength",
+    "RecallDirection",
+    "RecallInfluence",
+    "recall_association",
+    "apply_recall_motivation",
     "ProbeResult",
     "run_reference_probes",
     "EvalAction",
