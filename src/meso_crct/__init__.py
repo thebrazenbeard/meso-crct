@@ -71,6 +71,13 @@ from .runtime import (
     frame,
 )
 from .salience import LearningState, RecruitmentState, SalienceState, SignalKind
+from .selection import (
+    SelectionPolicy,
+    SelectionResult,
+    TargetEvaluation,
+    TargetState,
+    select_target,
+)
 from .semantic import SemanticAssessment, SemanticEvidence, assess_semantic_relevance
 from .state import (
     BASELINE_PLEASURE,
@@ -140,6 +147,11 @@ __all__ = [
     "RecallReplayError",
     "recall_association",
     "apply_recall_motivation",
+    "SelectionPolicy",
+    "TargetState",
+    "TargetEvaluation",
+    "SelectionResult",
+    "select_target",
     "ProbeResult",
     "run_reference_probes",
     "EvalAction",
