@@ -3,6 +3,7 @@ import pytest
 from meso_crct import (
     CircuitState,
     LearningState,
+    PlasticityCandidate,
     PlasticityPolicy,
     Provenance,
     ProvenanceVerifier,
@@ -34,6 +35,18 @@ def policy():
         maximum_absolute_delta=0.1,
         minimum_salience_gate=0.4,
     )
+
+
+def test_plasticity_candidate_cannot_be_constructed_directly():
+    with pytest.raises(TypeError):
+        PlasticityCandidate(
+            association_id="cue->outcome",
+            delta=1.0,
+            teaching_signal=1.0,
+            salience_gate=1.0,
+            gate_driver="semantic_relevance",
+            transition_receipt_id="pretend-receipt",
+        )
 
 
 def test_positive_prediction_error_proposes_bounded_strengthening():

@@ -32,6 +32,7 @@ class AssociationRevision:
     applied_delta: float
     transition_receipt_id: str
     operation: str
+    parent_revision_id: str | None
     revision_id: str
 
     def __post_init__(self) -> None:
@@ -66,8 +67,100 @@ class PlasticityReplayError(ValueError):
     pass
 
 
+class PlasticityNoOpError(ValueError):
+    pass
+
+
+class AssociationIntegrityError(ValueError):
+    pass
+
+
 class AssociationNotFound(KeyError):
     pass
+
+
+def _revision_id(
+    *,
+    association_id: str,
+    version: int,
+    strength: float,
+    previous_strength: float,
+    applied_delta: float,
+    transition_receipt_id: str,
+    operation: str,
+    parent_revision_id: str | None,
+) -> str:
+    payload = json.dumps(
+        {
+            "association_id": association_id,
+            "version": version,
+            "strength": strength,
+            "previous_strength": previous_strength,
+            "applied_delta": applied_delta,
+            "transition_receipt_id": transition_receipt_id,
+            "operation": operation,
+            "parent_revision_id": parent_revision_id,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _validate_integrity(revisions: tuple[AssociationRevision, ...]) -> None:
+    latest: dict[str, AssociationRevision] = {}
+    used_receipts: set[tuple[str, str]] = set()
+
+    for revision in revisions:
+        prior = latest.get(revision.association_id)
+        expected_version = 1 if prior is None else prior.version + 1
+        expected_previous = 0.0 if prior is None else prior.strength
+        expected_parent = None if prior is None else prior.revision_id
+
+        if revision.version != expected_version:
+            raise AssociationIntegrityError(
+                f"invalid version chain for {revision.association_id}"
+            )
+        if revision.previous_strength != expected_previous:
+            raise AssociationIntegrityError(
+                f"invalid previous strength for {revision.association_id}"
+            )
+        if revision.parent_revision_id != expected_parent:
+            raise AssociationIntegrityError(
+                f"invalid parent revision for {revision.association_id}"
+            )
+        if revision.operation == "revert" and prior is None:
+            raise AssociationIntegrityError(
+                "a revert cannot be the first association revision"
+            )
+
+        expected_id = _revision_id(
+            association_id=revision.association_id,
+            version=revision.version,
+            strength=revision.strength,
+            previous_strength=revision.previous_strength,
+            applied_delta=revision.applied_delta,
+            transition_receipt_id=revision.transition_receipt_id,
+            operation=revision.operation,
+            parent_revision_id=revision.parent_revision_id,
+        )
+        if revision.revision_id != expected_id:
+            raise AssociationIntegrityError(
+                f"invalid revision digest for {revision.association_id}"
+            )
+
+        if revision.operation == "apply":
+            receipt_key = (
+                revision.association_id,
+                revision.transition_receipt_id,
+            )
+            if receipt_key in used_receipts:
+                raise AssociationIntegrityError(
+                    "duplicate transition receipt for association"
+                )
+            used_receipts.add(receipt_key)
+
+        latest[revision.association_id] = revision
 
 
 @dataclass(frozen=True, slots=True)
@@ -75,6 +168,9 @@ class AssociationMemory:
     """Immutable append-only association revision log."""
 
     revisions: tuple[AssociationRevision, ...] = ()
+
+    def __post_init__(self) -> None:
+        _validate_integrity(self.revisions)
 
     def current(self, association_id: str) -> AssociationRevision | None:
         for revision in reversed(self.revisions):
@@ -110,47 +206,22 @@ class AssociationMemory:
         )
 
 
-def _revision_id(
-    *,
-    association_id: str,
-    version: int,
-    strength: float,
-    previous_strength: float,
-    applied_delta: float,
-    transition_receipt_id: str,
-    operation: str,
-) -> str:
-    payload = json.dumps(
-        {
-            "association_id": association_id,
-            "version": version,
-            "strength": strength,
-            "previous_strength": previous_strength,
-            "applied_delta": applied_delta,
-            "transition_receipt_id": transition_receipt_id,
-            "operation": operation,
-        },
-        sort_keys=True,
-        separators=(",", ":"),
-    )
-    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
-
-
 def apply_candidate(
     memory: AssociationMemory,
     candidate: PlasticityCandidate,
     *,
     expected_version: int,
 ) -> AssociationMemory:
-    """Apply one candidate as a new immutable association revision.
-
-    Optimistic version checking prevents stale writers. A transition receipt may
-    contribute at most one applied candidate across this memory snapshot.
-    """
+    """Apply one candidate as a new immutable association revision."""
     current_version = memory.current_version(candidate.association_id)
     if expected_version != current_version:
         raise MemoryVersionConflict(
             f"expected version {expected_version}, current version {current_version}"
+        )
+
+    if candidate.delta == 0.0:
+        raise PlasticityNoOpError(
+            "zero-delta plasticity candidates are not persistent learning events"
         )
 
     if memory.receipt_used(
@@ -158,15 +229,27 @@ def apply_candidate(
         candidate.association_id,
     ):
         raise PlasticityReplayError(
-            "transition receipt already used for a persistent association update"
+            "transition receipt already used for this association"
         )
 
-    previous = memory.current_strength(candidate.association_id)
+    prior = memory.current(candidate.association_id)
+    previous = 0.0 if prior is None else prior.strength
+    parent_revision_id = None if prior is None else prior.revision_id
     strength = _signed_unit(
         previous + candidate.delta,
         name="resulting_strength",
     )
     version = current_version + 1
+    revision_id = _revision_id(
+        association_id=candidate.association_id,
+        version=version,
+        strength=strength,
+        previous_strength=previous,
+        applied_delta=candidate.delta,
+        transition_receipt_id=candidate.transition_receipt_id,
+        operation="apply",
+        parent_revision_id=parent_revision_id,
+    )
     revision = AssociationRevision(
         association_id=candidate.association_id,
         version=version,
@@ -175,15 +258,8 @@ def apply_candidate(
         applied_delta=candidate.delta,
         transition_receipt_id=candidate.transition_receipt_id,
         operation="apply",
-        revision_id=_revision_id(
-            association_id=candidate.association_id,
-            version=version,
-            strength=strength,
-            previous_strength=previous,
-            applied_delta=candidate.delta,
-            transition_receipt_id=candidate.transition_receipt_id,
-            operation="apply",
-        ),
+        parent_revision_id=parent_revision_id,
+        revision_id=revision_id,
     )
     return AssociationMemory(revisions=memory.revisions + (revision,))
 
@@ -209,6 +285,17 @@ def revert_last(
     version = current.version + 1
     applied_delta = prior_strength - current.strength
     receipt_ref = current.transition_receipt_id
+    parent_revision_id = current.revision_id
+    revision_id = _revision_id(
+        association_id=association_id,
+        version=version,
+        strength=prior_strength,
+        previous_strength=current.strength,
+        applied_delta=applied_delta,
+        transition_receipt_id=receipt_ref,
+        operation="revert",
+        parent_revision_id=parent_revision_id,
+    )
 
     revision = AssociationRevision(
         association_id=association_id,
@@ -218,14 +305,7 @@ def revert_last(
         applied_delta=applied_delta,
         transition_receipt_id=receipt_ref,
         operation="revert",
-        revision_id=_revision_id(
-            association_id=association_id,
-            version=version,
-            strength=prior_strength,
-            previous_strength=current.strength,
-            applied_delta=applied_delta,
-            transition_receipt_id=receipt_ref,
-            operation="revert",
-        ),
+        parent_revision_id=parent_revision_id,
+        revision_id=revision_id,
     )
     return AssociationMemory(revisions=memory.revisions + (revision,))

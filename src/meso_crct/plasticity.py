@@ -46,7 +46,10 @@ class PlasticityPolicy:
         )
 
 
-@dataclass(frozen=True, slots=True)
+_PLASTICITY_CANDIDATE_TOKEN = object()
+
+
+@dataclass(frozen=True, slots=True, init=False)
 class PlasticityCandidate:
     association_id: str
     delta: float
@@ -55,22 +58,43 @@ class PlasticityCandidate:
     gate_driver: str | None
     transition_receipt_id: str
 
-    def __post_init__(self) -> None:
-        if not self.association_id.strip():
+    def __init__(
+        self,
+        association_id: str,
+        delta: float,
+        teaching_signal: float,
+        salience_gate: float,
+        gate_driver: str | None,
+        transition_receipt_id: str,
+        *,
+        _token: object | None = None,
+    ) -> None:
+        if _token is not _PLASTICITY_CANDIDATE_TOKEN:
+            raise TypeError(
+                "PlasticityCandidate must be created by propose_plasticity"
+            )
+        if not association_id.strip():
             raise ValueError("association_id must be non-empty")
-        object.__setattr__(self, "delta", _signed_unit(self.delta, name="delta"))
+        if not transition_receipt_id.strip():
+            raise ValueError("transition_receipt_id must be non-empty")
+        object.__setattr__(self, "association_id", association_id)
+        object.__setattr__(self, "delta", _signed_unit(delta, name="delta"))
         object.__setattr__(
             self,
             "teaching_signal",
-            _signed_unit(self.teaching_signal, name="teaching_signal"),
+            _signed_unit(teaching_signal, name="teaching_signal"),
         )
         object.__setattr__(
             self,
             "salience_gate",
-            _unit(self.salience_gate, name="salience_gate"),
+            _unit(salience_gate, name="salience_gate"),
         )
-        if not self.transition_receipt_id.strip():
-            raise ValueError("transition_receipt_id must be non-empty")
+        object.__setattr__(self, "gate_driver", gate_driver)
+        object.__setattr__(
+            self,
+            "transition_receipt_id",
+            transition_receipt_id,
+        )
 
 
 def propose_plasticity(
@@ -113,6 +137,7 @@ def propose_plasticity(
         salience_gate=gate,
         gate_driver=gate_driver_out,
         transition_receipt_id=receipt.receipt_id,
+        _token=_PLASTICITY_CANDIDATE_TOKEN,
     )
 
 

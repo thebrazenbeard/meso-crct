@@ -10,12 +10,18 @@ or other semantic authority.
 
 ```text
 verified transition
-  -> bounded plasticity candidate
+  -> verifier-bound transition receipt
+  -> proposal-only plasticity gate
+  -> non-zero bounded plasticity candidate
   -> association-memory version check
-  -> append-only revision
+  -> append-only parent-bound revision
 ```
 
-A plasticity candidate is therefore not durable merely because it exists.
+Callers cannot directly construct a valid `PlasticityCandidate` through the
+public reference API. The candidate must come through `propose_plasticity()`.
+
+A zero-delta candidate is not a learning event and is rejected by durable
+memory instead of creating meaningless versions.
 
 ## Optimistic versioning
 
@@ -23,6 +29,17 @@ Every association has a monotonically increasing version.
 
 An update must name the current expected version. Stale writers fail instead of
 silently overwriting newer learning.
+
+## Parent-bound revision chain
+
+Every revision after version 1 records the prior revision ID. The revision ID is
+a deterministic digest over the association, version, strengths, receipt,
+operation, and parent revision.
+
+`AssociationMemory` validates this chain whenever a memory snapshot is
+constructed. This detects accidental or unsanctioned structural alteration of
+the reference history. It is an integrity check, not a cryptographic proof of
+who authored a valid-looking snapshot.
 
 ## Replay protection
 
@@ -34,8 +51,8 @@ allowing one event to legitimately update more than one distinct association.
 
 ## Reversal
 
-`revert_last()` appends a new revision returning the association to its prior
-strength. It does not delete history.
+`revert_last()` appends a new parent-bound revision returning the association
+to its prior strength. It does not delete history.
 
 That makes negative-transfer repair auditable:
 
@@ -52,7 +69,7 @@ Association strengths remain in `[-1, 1]` even under repeated updates.
 
 ## Claim ceiling
 
-This module implements versioned learned associations.
+This module implements versioned learned associations and structural lineage.
 
 It does not establish:
 - autobiographical memory;
