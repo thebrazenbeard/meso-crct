@@ -122,6 +122,11 @@ from .review import (
     ReviewIntegrityError,
     ReviewNoOpError,
 )
+from .review_action import (
+    ReviewActionKind,
+    ReviewActionProposal,
+    propose_review_action,
+)
 from .review_evidence import (
     ReviewEvidence,
     ReviewEvidenceAssessment,
@@ -222,6 +227,9 @@ __all__ = [
     "ReviewIntegrityError",
     "ReviewAssessmentMismatch",
     "ReviewAssessmentInsufficient",
+    "ReviewActionKind",
+    "ReviewActionProposal",
+    "propose_review_action",
     "ReviewEvidenceKind",
     "ReviewEvidenceOutcome",
     "ReviewEvidencePolicy",

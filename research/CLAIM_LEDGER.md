@@ -76,3 +76,5 @@ States used here:
 | C-064 | Evidence gathered for one learned revision may clear a later changed revision. | REJECTED_AS_COLLAPSE | evidence assessment is exact-revision bound |
 | C-065 | Multiple supportive evidence labels attached to one holdout event can satisfy release diversity. | REJECTED_AS_COLLAPSE | release qualification counts distinct event IDs |
 | C-066 | The reference release policy can require multiple distinct supportive holdout events before classifying a revision CLEAR. | TESTED_LOCAL | default reference minimum is two; host policy may require more |
+| C-067 | An evidence assessment should directly mutate learned-association review state. | REJECTED_AS_COLLAPSE | assessment produces a non-mutating review action proposal |
+| C-068 | Evidence risk classification can deterministically propose quarantine/release/hold while leaving mutation authority separate. | TESTED_LOCAL | reference review-action proposal layer |
