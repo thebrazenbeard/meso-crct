@@ -191,34 +191,108 @@ V2 can support claims such as:
 
 It cannot establish subjective experience or phenomenal pleasure.
 
-
 ## 9. Current reference implementation layers
 
 The V2 branch now implements these separable reference layers:
 
-1. typed reward/protection state;
-2. typed salience, learning, and recruitment state;
+1. welfare-bounded hedonic state with independent hazard/avoidance;
+2. typed perceptual, semantic, motivational, incentive, epistemic, learning, and recruitment state;
 3. grounded semantic appraisal;
 4. generic homeostatic need state and target-specific incentive modulation;
-5. typed arbitration without global scalar collapse;
-6. runtime phase classification;
-7. exact verifier-bound source provenance and deterministic transition receipts;
-8. deterministic visible-reward / hidden-performance evaluation environments;
-9. long-horizon attention-budget auditing;
-10. explicit no-new-input temporal dynamics.
+5. typed arbitration without a global scalar collapse;
+6. explicit multi-target selection with hard protective override and visible non-protective policy;
+7. runtime phase classification;
+8. distinct event identity separate from state/content identity;
+9. verifier-bound provenance and constructor-gated deterministic transition receipts;
+10. no-new-input temporal dynamics;
+11. bounded receipt-bound plasticity proposals;
+12. append-only versioned association memory with parent lineage, replay checks, optimistic versioning, and reversal;
+13. guarded cue-bound recall with one-use event replay control;
+14. visible-reward / hidden-performance evaluation environments;
+15. actual-selection allocation-window auditing;
+16. protective-safe allocation rebalancing;
+17. rolling closed allocation control;
+18. canonical typed target appraisal;
+19. auditable appraised-experience transactions joining appraisal, event lineage, optional learning, and durable association updates.
 
-Passing a lower layer does not imply that a higher layer exists or is correct.
+Passing one layer does not imply that a later layer is correct or sufficient.
 
-## 10. Current next frontier: plasticity and memory
+## 10. End-to-end reference loop
 
-The largest missing causal link in the original hypothesis is now explicit:
+The currently implemented causal path is:
 
 ```text
-salience / reward / prediction error
-    -> bounded memory-strength candidate update
-    -> persistent learned change
+current evidence + internal state
+    -> canonical typed appraisal
+    -> verified source + distinct event
+    -> transition receipt
+    -> target arbitration / selection
+    -> allocation health control
+    -> signed prediction-error teaching signal
+    -> bounded plasticity candidate
+    -> versioned learned association
+    -> later distinct cue event
+    -> guarded recall
+    -> current motivational salience
+    -> future selection
 ```
 
-That layer must preserve the distinction between transient state, current context, learned preference, autobiographical admission, and phenomenology.
+Critically, the architecture preserves separate identities for:
 
-The next implementation should therefore use bounded, provenance-bearing plasticity candidates rather than directly converting high reward or salience into permanent preference.
+- current transient activation;
+- persistent numeric learned association;
+- current cue evidence;
+- event occurrence;
+- pleasure;
+- protection;
+- authority/truth.
+
+## 11. Current frontier: motivational direction and action tendency
+
+Target priority is now explicit, but priority alone does not answer **what action relation the system should take toward the selected target**.
+
+The current architecture can represent:
+- protective danger;
+- positive incentive attraction;
+- learned positive association;
+- learned negative association;
+- generic motivational salience;
+- epistemic/orienting priority.
+
+The next layer should preserve direction instead of collapsing all of these into “high motivation.”
+
+A useful semantic boundary is:
+
+```text
+which target gets processing?
+    !=
+what action tendency applies to that target?
+```
+
+Candidate action-tendency classes should distinguish at least:
+- approach;
+- learned avoidance / withdrawal;
+- protective withdrawal;
+- inspect / investigate;
+- no committed direction.
+
+Generic motivational salience without directional evidence should not silently become approach.
+
+## 12. Remaining open qualification frontiers
+
+Reference tests are not trained-agent robustness.
+
+Still open:
+- learned/adaptive policies discovering exploits not explicitly encoded in fixtures;
+- strategic manipulation of goal IDs or obligation policies;
+- cue-match quality and adversarial cue ambiguity;
+- subthreshold cross-module capture over long horizons;
+- host-level source-verifier and event-stream currentness;
+- richer negative-transfer qualification for durable learning;
+- interaction with a real agent/runtime policy rather than only reference state machinery.
+
+## 13. Claim ceiling
+
+V2 can support claims about implemented typed mechanisms, bounded state, exact receipt/event lineage, reference selection/control behavior, and tested association-learning/recall paths.
+
+It cannot establish subjective experience, biological equivalence, autonomous consciousness, or correctness of a future trained policy.
