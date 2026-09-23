@@ -39,12 +39,31 @@ class TargetAppraisalInput:
             raise ValueError("target_id must be non-empty")
 
 
-@dataclass(frozen=True, slots=True)
+_APPRAISED_TARGET_TOKEN = object()
+
+
+@dataclass(frozen=True, slots=True, init=False)
 class AppraisedTarget:
     target_id: str
     state: CircuitState
     semantic: SemanticAssessment
     homeostatic: HomeostaticModulation
+
+    def __init__(
+        self,
+        *,
+        target_id: str,
+        state: CircuitState,
+        semantic: SemanticAssessment,
+        homeostatic: HomeostaticModulation,
+        _token: object | None = None,
+    ) -> None:
+        if _token is not _APPRAISED_TARGET_TOKEN:
+            raise TypeError("AppraisedTarget must be created by build_target_appraisal")
+        object.__setattr__(self, "target_id", target_id)
+        object.__setattr__(self, "state", state)
+        object.__setattr__(self, "semantic", semantic)
+        object.__setattr__(self, "homeostatic", homeostatic)
 
     def as_target_state(self) -> TargetState:
         return TargetState(self.target_id, self.state)
@@ -93,4 +112,5 @@ def build_target_appraisal(spec: TargetAppraisalInput) -> AppraisedTarget:
         state=state,
         semantic=semantic,
         homeostatic=homeostatic,
+        _token=_APPRAISED_TARGET_TOKEN,
     )

@@ -1,6 +1,7 @@
 import pytest
 
 from meso_crct import (
+    AppraisedTarget,
     HomeostaticState,
     NeedAffordance,
     NeedAxis,
@@ -116,3 +117,16 @@ def test_appraised_target_converts_to_selection_target_without_mutation():
 def test_empty_target_id_fails():
     with pytest.raises(ValueError):
         TargetAppraisalInput(target_id="   ")
+
+
+def test_appraised_target_direct_construction_is_blocked():
+    genuine = build_target_appraisal(
+        TargetAppraisalInput(target_id="genuine")
+    )
+    with pytest.raises(TypeError):
+        AppraisedTarget(
+            target_id="fake",
+            state=genuine.state,
+            semantic=genuine.semantic,
+            homeostatic=genuine.homeostatic,
+        )

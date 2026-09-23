@@ -27,6 +27,11 @@ from .control import (
     control_step,
 )
 from .dynamics import DynamicsConfig, advance_without_input, decay_toward
+from .episode import (
+    ExperienceLearningSpec,
+    ExperienceTransactionResult,
+    process_appraised_experience,
+)
 from .events import EventIdentity, EventSequencer
 from .evaluation_env import (
     EvalAction,
@@ -119,6 +124,9 @@ __all__ = [
     "ControlState",
     "ControlStepResult",
     "control_step",
+    "ExperienceLearningSpec",
+    "ExperienceTransactionResult",
+    "process_appraised_experience",
     "EventIdentity",
     "EventSequencer",
     "DynamicsConfig",
