@@ -50,6 +50,12 @@ from .homeostasis import (
     NeedAxis,
     modulate_incentive_salience,
 )
+from .intent import (
+    IntentKind,
+    IntentPolicy,
+    IntentProposal,
+    propose_action_intent,
+)
 from .memory import (
     AssociationIntegrityError,
     AssociationMemory,
@@ -143,6 +149,10 @@ __all__ = [
     "HomeostaticState",
     "HomeostaticModulation",
     "modulate_incentive_salience",
+    "IntentKind",
+    "IntentPolicy",
+    "IntentProposal",
+    "propose_action_intent",
     "AssociationRevision",
     "AssociationMemory",
     "AssociationNotFound",
