@@ -26,6 +26,15 @@ from .control import (
     ControlStepResult,
     control_step,
 )
+from .decision_cycle import (
+    DecisionCyclePolicy,
+    DecisionCycleResult,
+    DecisionCycleState,
+    RecallStateMismatch,
+    TargetRecallBinding,
+    TargetRecallResolution,
+    run_decision_cycle,
+)
 from .dynamics import DynamicsConfig, advance_without_input, decay_toward
 from .episode import (
     ExperienceLearningSpec,
@@ -143,6 +152,13 @@ __all__ = [
     "ControlState",
     "ControlStepResult",
     "control_step",
+    "DecisionCyclePolicy",
+    "DecisionCycleResult",
+    "DecisionCycleState",
+    "RecallStateMismatch",
+    "TargetRecallBinding",
+    "TargetRecallResolution",
+    "run_decision_cycle",
     "ExperienceLearningSpec",
     "ExperienceTransactionResult",
     "process_appraised_experience",
