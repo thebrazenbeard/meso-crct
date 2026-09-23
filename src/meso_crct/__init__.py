@@ -27,6 +27,12 @@ from .homeostasis import (
     NeedAxis,
     modulate_incentive_salience,
 )
+from .plasticity import (
+    PlasticityCandidate,
+    PlasticityPolicy,
+    preview_association_strength,
+    propose_plasticity,
+)
 from .provenance import (
     Provenance,
     ProvenanceVerificationError,
@@ -91,6 +97,10 @@ __all__ = [
     "classify_phase",
     "frame",
     "evaluate_transition",
+    "PlasticityPolicy",
+    "PlasticityCandidate",
+    "propose_plasticity",
+    "preview_association_strength",
     "ProbeResult",
     "run_reference_probes",
     "EvalAction",
