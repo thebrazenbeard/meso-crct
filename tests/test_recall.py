@@ -10,6 +10,8 @@ from meso_crct import (
     ProvenanceVerifier,
     RecallDirection,
     RecallInfluence,
+    RecallLedger,
+    RecallReplayError,
     RewardState,
     SalienceState,
     SourceKind,
@@ -21,7 +23,7 @@ from meso_crct import (
 )
 
 
-def transition_receipt(state, *, source_id):
+def transition_receipt(state, *, source_id, event=None):
     claim = Provenance(
         source_kind=SourceKind.ENVIRONMENT,
         source_id=source_id,
@@ -31,7 +33,8 @@ def transition_receipt(state, *, source_id):
         [claim],
         verifier_id="recall-test-verifier",
     ).verify(claim)
-    _, event = EventSequencer(source_id).issue()
+    if event is None:
+        _, event = EventSequencer(source_id).issue()
     return evaluate_transition(
         before=CircuitState(),
         after=state,
@@ -65,13 +68,14 @@ def learned_memory(*, prediction_error=1.0):
     )
 
 
-def current_cue_receipt():
+def current_cue_receipt(*, event=None):
     cue_state = CircuitState(
         salience=SalienceState(perceptual_salience=0.7),
     )
     return transition_receipt(
         cue_state,
         source_id="observation:current-cue",
+        event=event,
     )
 
 
@@ -81,6 +85,7 @@ def test_recall_influence_cannot_be_constructed_directly():
             association_id="cue->outcome",
             memory_revision_id="fake-revision",
             cue_receipt_id="fake-receipt",
+            cue_event_id="fake-event",
             cue_match=1.0,
             learned_strength=1.0,
             signed_influence=1.0,
@@ -147,7 +152,11 @@ def test_recall_can_raise_motivation_without_changing_pleasure_or_hazard():
         ),
         salience=SalienceState(motivational_salience=0.1),
     )
-    updated = apply_recall_motivation(state, influence)
+    updated, _ = apply_recall_motivation(
+        state,
+        influence,
+        RecallLedger(),
+    )
     assert updated.salience.motivational_salience == pytest.approx(0.8)
     assert updated.reward == state.reward
 
@@ -162,11 +171,59 @@ def test_recall_never_reduces_existing_motivation():
     state = CircuitState(
         salience=SalienceState(motivational_salience=0.9),
     )
-    updated = apply_recall_motivation(state, influence)
+    updated, _ = apply_recall_motivation(
+        state,
+        influence,
+        RecallLedger(),
+    )
     assert updated.salience.motivational_salience == 0.9
 
 
-def test_recall_binds_memory_revision_and_current_cue_receipt():
+def test_same_cue_event_cannot_refresh_same_association_twice():
+    influence = recall_association(
+        memory=learned_memory(),
+        association_id="cue->outcome",
+        cue_match=1.0,
+        cue_receipt=current_cue_receipt(),
+    )
+    state, ledger = apply_recall_motivation(
+        CircuitState(),
+        influence,
+        RecallLedger(),
+    )
+    with pytest.raises(RecallReplayError):
+        apply_recall_motivation(state, influence, ledger)
+
+
+def test_distinct_occurrence_of_same_cue_can_recall_again():
+    sequencer = EventSequencer("observation:current-cue")
+    sequencer, event1 = sequencer.issue()
+    _, event2 = sequencer.issue()
+    memory = learned_memory()
+
+    first = recall_association(
+        memory=memory,
+        association_id="cue->outcome",
+        cue_match=1.0,
+        cue_receipt=current_cue_receipt(event=event1),
+    )
+    second = recall_association(
+        memory=memory,
+        association_id="cue->outcome",
+        cue_match=1.0,
+        cue_receipt=current_cue_receipt(event=event2),
+    )
+
+    state, ledger = apply_recall_motivation(
+        CircuitState(),
+        first,
+        RecallLedger(),
+    )
+    state, ledger = apply_recall_motivation(state, second, ledger)
+    assert len(ledger.consumed) == 2
+
+
+def test_recall_binds_memory_revision_current_receipt_and_event():
     memory = learned_memory()
     cue_receipt = current_cue_receipt()
     influence = recall_association(
@@ -177,3 +234,4 @@ def test_recall_binds_memory_revision_and_current_cue_receipt():
     )
     assert influence.memory_revision_id == memory.current("cue->outcome").revision_id
     assert influence.cue_receipt_id == cue_receipt.receipt_id
+    assert influence.cue_event_id == cue_receipt.event_id

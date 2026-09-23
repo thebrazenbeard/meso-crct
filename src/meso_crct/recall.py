@@ -2,8 +2,7 @@
 
 Stored association strength is not self-activating. Recall requires a current
 cue match and a constructor-gated transition receipt for the current event.
-Recall can support current motivational salience while preserving learned
-direction separately from pleasure and protective hazard.
+Recall application is replay-bounded by association + cue-event identity.
 """
 
 from __future__ import annotations
@@ -30,6 +29,26 @@ class RecallDirection(StrEnum):
     NEUTRAL = "neutral"
 
 
+class RecallReplayError(ValueError):
+    pass
+
+
+@dataclass(frozen=True, slots=True)
+class RecallLedger:
+    consumed: frozenset[tuple[str, str]] = frozenset()
+
+    def has_consumed(self, influence: "RecallInfluence") -> bool:
+        return (influence.association_id, influence.cue_event_id) in self.consumed
+
+    def consume(self, influence: "RecallInfluence") -> "RecallLedger":
+        key = (influence.association_id, influence.cue_event_id)
+        if key in self.consumed:
+            raise RecallReplayError(
+                "cue event already consumed for this association"
+            )
+        return RecallLedger(consumed=self.consumed | {key})
+
+
 _RECALL_INFLUENCE_TOKEN = object()
 
 
@@ -38,6 +57,7 @@ class RecallInfluence:
     association_id: str
     memory_revision_id: str
     cue_receipt_id: str
+    cue_event_id: str
     cue_match: float
     learned_strength: float
     signed_influence: float
@@ -52,6 +72,7 @@ class RecallInfluence:
         association_id: str,
         memory_revision_id: str,
         cue_receipt_id: str,
+        cue_event_id: str,
         cue_match: float,
         learned_strength: float,
         signed_influence: float,
@@ -67,12 +88,14 @@ class RecallInfluence:
             ("association_id", association_id),
             ("memory_revision_id", memory_revision_id),
             ("cue_receipt_id", cue_receipt_id),
+            ("cue_event_id", cue_event_id),
         ):
             if not value.strip():
                 raise ValueError(f"{name} must be non-empty")
         object.__setattr__(self, "association_id", association_id)
         object.__setattr__(self, "memory_revision_id", memory_revision_id)
         object.__setattr__(self, "cue_receipt_id", cue_receipt_id)
+        object.__setattr__(self, "cue_event_id", cue_event_id)
         object.__setattr__(self, "cue_match", _unit(cue_match, name="cue_match"))
         object.__setattr__(self, "learned_strength", float(learned_strength))
         object.__setattr__(self, "signed_influence", float(signed_influence))
@@ -120,6 +143,7 @@ def recall_association(
         association_id=association_id,
         memory_revision_id=revision.revision_id,
         cue_receipt_id=cue_receipt.receipt_id,
+        cue_event_id=cue_receipt.event_id,
         cue_match=match,
         learned_strength=revision.strength,
         signed_influence=signed,
@@ -134,12 +158,10 @@ def recall_association(
 def apply_recall_motivation(
     state: CircuitState,
     influence: RecallInfluence,
-) -> CircuitState:
-    """Apply recall only as bounded motivational support.
-
-    Learned avoidance is kept as metadata on RecallInfluence; it does not
-    silently write the hazard/avoidance protection channels.
-    """
+    ledger: RecallLedger,
+) -> tuple[CircuitState, RecallLedger]:
+    """Apply bounded recall support exactly once per association + cue event."""
+    updated_ledger = ledger.consume(influence)
     motivation = max(
         state.salience.motivational_salience,
         influence.motivational_support,
@@ -147,4 +169,4 @@ def apply_recall_motivation(
     salience = state.salience.with_signals(
         motivational_salience=motivation,
     )
-    return replace(state, salience=salience)
+    return replace(state, salience=salience), updated_ledger

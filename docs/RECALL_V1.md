@@ -10,12 +10,26 @@ The reference recall path requires both:
 
 ```text
 stored association
-    + current cue evidence
+    + current cue event
     -> bounded recall influence
+    -> replay ledger
     -> current motivational support
 ```
 
 A stored association with `cue_match = 0` contributes no current motivation.
+
+## Event-bounded replay
+
+Each `RecallInfluence` binds both the cue receipt and its event ID.
+
+`RecallLedger` allows a cue event to affect a given association once. Reusing
+the same event for the same association raises `RecallReplayError`.
+
+A later distinct occurrence of the same cue has a different event identity and
+may contribute again.
+
+This prevents a caller from taking one valid old cue and repeatedly refreshing
+motivation after transient state would otherwise decay.
 
 ## Direction stays separate
 
@@ -28,38 +42,22 @@ avoidance channels.
 
 Likewise recall does not rewrite pleasure.
 
-```text
-learned association
-    !=
-current pleasure
-    !=
-current hazard
-```
-
-## Lineage
-
-Each recall influence binds:
-
-- the exact current association revision ID;
-- the exact current cue transition receipt ID.
-
-`RecallInfluence` is constructor-gated and is produced through
-`recall_association()`.
-
 ## Current integration
 
-`apply_recall_motivation()` can raise current motivational salience to the
-recall support magnitude. It never lowers stronger current motivation and does
-not alter reward/protection state.
+`apply_recall_motivation()` raises current motivational salience to the recall
+support magnitude if that exceeds current motivation. It never lowers stronger
+current motivation and does not alter reward/protection state.
 
-This closes the first full reference loop:
+The function returns both updated circuit state and updated replay ledger.
+
+This closes the first guarded reference loop:
 
 ```text
 experience
   -> salience + prediction error
   -> bounded plasticity
   -> versioned association memory
-  -> later cue
-  -> guarded recall
+  -> later distinct cue event
+  -> guarded one-use recall
   -> current motivational salience
 ```

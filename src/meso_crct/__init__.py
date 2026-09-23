@@ -58,6 +58,8 @@ from .provenance import (
 from .recall import (
     RecallDirection,
     RecallInfluence,
+    RecallLedger,
+    RecallReplayError,
     apply_recall_motivation,
     recall_association,
 )
@@ -134,6 +136,8 @@ __all__ = [
     "preview_association_strength",
     "RecallDirection",
     "RecallInfluence",
+    "RecallLedger",
+    "RecallReplayError",
     "recall_association",
     "apply_recall_motivation",
     "ProbeResult",
