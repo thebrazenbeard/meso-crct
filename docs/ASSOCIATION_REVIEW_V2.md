@@ -86,3 +86,27 @@ release, or learning therefore invalidates older precomputed recall snapshots.
 This governance layer makes the evidence basis explicit and auditable. It does
 not prove the holdout set is representative, unbiased, adversarially sufficient,
 or scientifically correct.
+
+
+## Durable evidence admission
+
+Evidence assessment is not enough by itself to mutate review state.
+
+The association memory owns an append-only `ReviewEvidenceLedger`.
+`register_review_evidence()` admits each evidence item against the exact
+current association revision.
+
+The ledger rejects:
+- exact evidence replay;
+- relabeling one event as multiple evidence records for the same revision;
+- evidence bound to an old/non-current learned revision.
+
+Quarantine/release then require every evidence ID in the assessment to already
+exist in that ledger.
+
+`AssociationMemory` cross-validates every stored review record by fetching its
+registered evidence, recomputing the assessment through the ordinary assessment
+path, and comparing the resulting assessment digest/risk to the review record.
+
+A review registry manually assembled without its evidence ledger therefore
+fails memory integrity validation.

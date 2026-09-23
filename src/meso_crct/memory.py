@@ -15,7 +15,15 @@ import math
 
 from .plasticity import PlasticityCandidate
 from .review import AssociationReviewRegistry
-from .review_evidence import ReviewEvidenceAssessment
+from .review_evidence import (
+    ReviewEvidence,
+    ReviewEvidenceAssessment,
+    ReviewEvidenceLedger,
+    ReviewEvidenceMismatch,
+    ReviewEvidenceNotRegistered,
+    ReviewEvidencePolicy,
+    assess_review_evidence,
+)
 
 
 def _signed_unit(value: float, *, name: str) -> float:
@@ -173,9 +181,42 @@ class AssociationMemory:
     reviews: AssociationReviewRegistry = field(
         default_factory=AssociationReviewRegistry
     )
+    review_evidence: ReviewEvidenceLedger = field(
+        default_factory=ReviewEvidenceLedger
+    )
 
     def __post_init__(self) -> None:
         _validate_integrity(self.revisions)
+        self._validate_review_integrity()
+
+    def _validate_review_integrity(self) -> None:
+        for record in self.reviews.records:
+            try:
+                items = self.review_evidence.items_for_ids(
+                    record.evidence_ids,
+                    association_id=record.association_id,
+                    memory_revision_id=record.memory_revision_id,
+                )
+            except (ReviewEvidenceNotRegistered, ReviewEvidenceMismatch) as exc:
+                raise AssociationIntegrityError(
+                    f"review evidence integrity failed for {record.association_id}"
+                ) from exc
+
+            recomputed = assess_review_evidence(
+                items,
+                policy=ReviewEvidencePolicy(
+                    minimum_supporting_holdout_events=(
+                        record.required_supporting_holdout_events
+                    )
+                ),
+            )
+            if (
+                recomputed.assessment_id != record.assessment_id
+                or recomputed.risk_class is not record.risk_class
+            ):
+                raise AssociationIntegrityError(
+                    f"review assessment integrity failed for {record.association_id}"
+                )
 
     def current(self, association_id: str) -> AssociationRevision | None:
         for revision in reversed(self.revisions):
@@ -269,6 +310,7 @@ def apply_candidate(
     return AssociationMemory(
         revisions=memory.revisions + (revision,),
         reviews=memory.reviews,
+        review_evidence=memory.review_evidence,
     )
 
 
@@ -319,6 +361,28 @@ def revert_last(
     return AssociationMemory(
         revisions=memory.revisions + (revision,),
         reviews=memory.reviews,
+        review_evidence=memory.review_evidence,
+    )
+
+
+
+def register_review_evidence(
+    memory: AssociationMemory,
+    evidence: ReviewEvidence,
+) -> AssociationMemory:
+    """Admit one review-evidence item against the exact current revision."""
+    current = memory.current(evidence.association_id)
+    if current is None:
+        raise AssociationNotFound(evidence.association_id)
+    if current.revision_id != evidence.memory_revision_id:
+        raise ReviewEvidenceMismatch(
+            "review evidence does not bind the current association revision"
+        )
+    ledger = memory.review_evidence.register(evidence)
+    return AssociationMemory(
+        revisions=memory.revisions,
+        reviews=memory.reviews,
+        review_evidence=ledger,
     )
 
 
@@ -332,6 +396,7 @@ def quarantine_association(
     current = memory.current(association_id)
     if current is None:
         raise AssociationNotFound(association_id)
+    memory.review_evidence.validate_assessment(assessment)
     reviews = memory.reviews.quarantine(
         association_id=association_id,
         memory_revision_id=current.revision_id,
@@ -340,6 +405,7 @@ def quarantine_association(
     return AssociationMemory(
         revisions=memory.revisions,
         reviews=reviews,
+        review_evidence=memory.review_evidence,
     )
 
 
@@ -353,6 +419,7 @@ def release_association(
     current = memory.current(association_id)
     if current is None:
         raise AssociationNotFound(association_id)
+    memory.review_evidence.validate_assessment(assessment)
     reviews = memory.reviews.release(
         association_id=association_id,
         memory_revision_id=current.revision_id,
@@ -361,4 +428,5 @@ def release_association(
     return AssociationMemory(
         revisions=memory.revisions,
         reviews=reviews,
+        review_evidence=memory.review_evidence,
     )

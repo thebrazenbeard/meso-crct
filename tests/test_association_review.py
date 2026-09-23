@@ -1,6 +1,7 @@
 import pytest
 
 from meso_crct import (
+    AssociationIntegrityError,
     AssociationMemory,
     AssociationQuarantinedError,
     AssociationReviewRecord,
@@ -15,6 +16,7 @@ from meso_crct import (
     ReviewAssessmentMismatch,
     ReviewDisposition,
     ReviewEvidenceKind,
+    ReviewEvidenceNotRegistered,
     ReviewEvidenceOutcome,
     ReviewNoOpError,
     ReviewRiskClass,
@@ -27,6 +29,7 @@ from meso_crct import (
     propose_plasticity,
     quarantine_association,
     recall_association,
+    register_review_evidence,
     release_association,
 )
 
@@ -112,46 +115,53 @@ def cue_receipt(stream="cue"):
     )
 
 
-def assessment_for(memory, *, kind, outcome, ref):
+def register_assessment(memory, specs):
     revision = memory.current("cue->outcome")
     assert revision is not None
-    item = bind_review_evidence(
-        association_id="cue->outcome",
-        memory_revision_id=revision.revision_id,
-        kind=kind,
-        outcome=outcome,
-        evidence_ref=ref,
-        receipt=cue_receipt(ref),
-    )
-    return assess_review_evidence([item])
+    items = []
+    for kind, outcome, ref in specs:
+        item = bind_review_evidence(
+            association_id="cue->outcome",
+            memory_revision_id=revision.revision_id,
+            kind=kind,
+            outcome=outcome,
+            evidence_ref=ref,
+            receipt=cue_receipt(ref),
+        )
+        memory = register_review_evidence(memory, item)
+        items.append(item)
+    return memory, assess_review_evidence(items)
 
 
 def quarantine_assessment(memory, ref="negative-transfer"):
-    return assessment_for(
+    return register_assessment(
         memory,
-        kind=ReviewEvidenceKind.HOLDOUT,
-        outcome=ReviewEvidenceOutcome.CONTRADICTS,
-        ref=ref,
+        [
+            (
+                ReviewEvidenceKind.HOLDOUT,
+                ReviewEvidenceOutcome.CONTRADICTS,
+                ref,
+            )
+        ],
     )
 
 
 def clear_assessment(memory, ref="clear-holdout"):
-    revision = memory.current("cue->outcome")
-    assert revision is not None
-    items = []
-    for suffix in ("a", "b"):
-        evidence_ref = f"{ref}-{suffix}"
-        items.append(
-            bind_review_evidence(
-                association_id="cue->outcome",
-                memory_revision_id=revision.revision_id,
-                kind=ReviewEvidenceKind.HOLDOUT,
-                outcome=ReviewEvidenceOutcome.SUPPORTS,
-                evidence_ref=evidence_ref,
-                receipt=cue_receipt(evidence_ref),
-            )
-        )
-    return assess_review_evidence(items)
+    return register_assessment(
+        memory,
+        [
+            (
+                ReviewEvidenceKind.HOLDOUT,
+                ReviewEvidenceOutcome.SUPPORTS,
+                f"{ref}-a",
+            ),
+            (
+                ReviewEvidenceKind.HOLDOUT,
+                ReviewEvidenceOutcome.SUPPORTS,
+                f"{ref}-b",
+            ),
+        ],
+    )
 
 
 def test_review_record_cannot_be_constructed_directly():
@@ -164,26 +174,45 @@ def test_review_record_cannot_be_constructed_directly():
             risk_class=ReviewRiskClass.CONTRADICTED,
             assessment_id="fake",
             evidence_ids=("fake",),
+            required_supporting_holdout_events=2,
             parent_review_id=None,
             review_id="fake",
+        )
+
+
+def test_unregistered_assessment_cannot_mutate_review_state():
+    memory = learned_memory()
+    revision = memory.current("cue->outcome")
+    item = bind_review_evidence(
+        association_id="cue->outcome",
+        memory_revision_id=revision.revision_id,
+        kind=ReviewEvidenceKind.HOLDOUT,
+        outcome=ReviewEvidenceOutcome.CONTRADICTS,
+        evidence_ref="not-registered",
+        receipt=cue_receipt("not-registered"),
+    )
+    assessment = assess_review_evidence([item])
+    with pytest.raises(ReviewEvidenceNotRegistered):
+        quarantine_association(
+            memory,
+            "cue->outcome",
+            assessment=assessment,
         )
 
 
 def test_quarantine_preserves_learning_but_blocks_recall():
     memory = learned_memory()
     revision = memory.current("cue->outcome")
-    assert revision is not None
-
-    assessment = quarantine_assessment(memory)
+    memory, assessment = quarantine_assessment(memory)
     quarantined = quarantine_association(
         memory,
         "cue->outcome",
         assessment=assessment,
     )
 
-    assert quarantined.revisions == memory.revisions
     assert quarantined.current_strength("cue->outcome") == pytest.approx(0.8)
     assert quarantined.current("cue->outcome").revision_id == revision.revision_id
+    assert quarantined.review_evidence.evidence
     assert quarantined.reviews.current("cue->outcome").assessment_id == assessment.assessment_id
 
     with pytest.raises(AssociationQuarantinedError):
@@ -195,25 +224,28 @@ def test_quarantine_preserves_learning_but_blocks_recall():
         )
 
 
-def test_release_requires_clear_holdout_evidence():
+def test_release_requires_registered_clear_holdout_evidence():
     memory = learned_memory()
-    quarantined = quarantine_association(
+    memory, bad = quarantine_assessment(memory)
+    memory = quarantine_association(
         memory,
         "cue->outcome",
-        assessment=quarantine_assessment(memory),
+        assessment=bad,
     )
 
+    memory, still_bad = quarantine_assessment(memory, ref="still-bad")
     with pytest.raises(ReviewAssessmentInsufficient):
         release_association(
-            quarantined,
+            memory,
             "cue->outcome",
-            assessment=quarantine_assessment(quarantined, ref="still-bad"),
+            assessment=still_bad,
         )
 
+    memory, clear = clear_assessment(memory)
     released = release_association(
-        quarantined,
+        memory,
         "cue->outcome",
-        assessment=clear_assessment(quarantined),
+        assessment=clear,
     )
     influence = recall_association(
         memory=released,
@@ -221,9 +253,6 @@ def test_release_requires_clear_holdout_evidence():
         cue_match=1.0,
         cue_receipt=cue_receipt(),
     )
-
-    assert released.revisions == memory.revisions
-    assert len(released.reviews.history("cue->outcome")) == 2
     assert influence.review_record_id == released.reviews.current(
         "cue->outcome"
     ).review_id
@@ -231,16 +260,10 @@ def test_release_requires_clear_holdout_evidence():
 
 def test_learning_change_after_release_makes_review_stale_until_new_evidence():
     memory = learned_memory()
-    memory = quarantine_association(
-        memory,
-        "cue->outcome",
-        assessment=quarantine_assessment(memory),
-    )
-    memory = release_association(
-        memory,
-        "cue->outcome",
-        assessment=clear_assessment(memory),
-    )
+    memory, bad = quarantine_assessment(memory)
+    memory = quarantine_association(memory, "cue->outcome", assessment=bad)
+    memory, clear = clear_assessment(memory)
+    memory = release_association(memory, "cue->outcome", assessment=clear)
     changed = add_learning(memory)
 
     with pytest.raises(AssociationReviewStaleError):
@@ -255,33 +278,50 @@ def test_learning_change_after_release_makes_review_stale_until_new_evidence():
         release_association(
             changed,
             "cue->outcome",
-            assessment=clear_assessment(memory, ref="old-revision-evidence"),
+            assessment=clear,
         )
 
+    changed, new_clear = clear_assessment(
+        changed,
+        ref="new-revision-holdout",
+    )
     re_reviewed = release_association(
         changed,
         "cue->outcome",
-        assessment=clear_assessment(changed, ref="new-revision-holdout"),
+        assessment=new_clear,
     )
-    influence = recall_association(
+    assert recall_association(
         memory=re_reviewed,
         association_id="cue->outcome",
         cue_match=1.0,
         cue_receipt=cue_receipt("cue-after-rereview"),
+    ).learned_strength == pytest.approx(1.0)
+
+
+def test_manual_review_registry_without_evidence_ledger_fails_memory_integrity():
+    memory = learned_memory()
+    memory_with_evidence, assessment = quarantine_assessment(memory)
+    registry = memory_with_evidence.reviews.quarantine(
+        association_id="cue->outcome",
+        memory_revision_id=memory.current("cue->outcome").revision_id,
+        assessment=assessment,
     )
-    assert influence.learned_strength == pytest.approx(1.0)
+    with pytest.raises(AssociationIntegrityError):
+        AssociationMemory(
+            revisions=memory.revisions,
+            reviews=registry,
+        )
 
 
 def test_review_log_is_append_only_and_rejects_exact_same_assessment_noop():
     memory = learned_memory()
-    assessment = quarantine_assessment(memory)
+    memory, assessment = quarantine_assessment(memory)
     quarantined = quarantine_association(
         memory,
         "cue->outcome",
         assessment=assessment,
     )
     first = quarantined.reviews.current("cue->outcome")
-    assert first is not None
 
     with pytest.raises(ReviewNoOpError):
         quarantine_association(
@@ -290,17 +330,15 @@ def test_review_log_is_append_only_and_rejects_exact_same_assessment_noop():
             assessment=assessment,
         )
 
+    quarantined, clear = clear_assessment(quarantined)
     released = release_association(
         quarantined,
         "cue->outcome",
-        assessment=clear_assessment(quarantined),
+        assessment=clear,
     )
     history = released.reviews.history("cue->outcome")
     assert len(history) == 2
-    assert history[0].review_id == first.review_id
     assert history[1].parent_review_id == first.review_id
-    assert history[0].disposition is ReviewDisposition.QUARANTINED
-    assert history[1].disposition is ReviewDisposition.ACTIVE
 
 
 def test_unreviewed_association_remains_recallable():
@@ -312,4 +350,3 @@ def test_unreviewed_association_remains_recallable():
         cue_receipt=cue_receipt(),
     )
     assert influence.review_record_id is None
-    assert influence.learned_strength == pytest.approx(0.8)

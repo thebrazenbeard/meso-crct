@@ -295,3 +295,115 @@ def assess_review_evidence(
         assessment_id=assessment_id,
         _token=_ASSESSMENT_TOKEN,
     )
+
+
+
+class ReviewEvidenceReplayError(ValueError):
+    pass
+
+
+class ReviewEvidenceConflictError(ValueError):
+    pass
+
+
+class ReviewEvidenceNotRegistered(ValueError):
+    pass
+
+
+@dataclass(frozen=True, slots=True)
+class ReviewEvidenceLedger:
+    """Append-only admission ledger for exact-revision review evidence."""
+
+    evidence: tuple[ReviewEvidence, ...] = ()
+
+    def __post_init__(self) -> None:
+        ids: set[str] = set()
+        events: set[tuple[str, str, str]] = set()
+        for item in self.evidence:
+            if item.evidence_id in ids:
+                raise ReviewEvidenceReplayError(
+                    f"duplicate review evidence ID: {item.evidence_id}"
+                )
+            ids.add(item.evidence_id)
+
+            event_key = (
+                item.association_id,
+                item.memory_revision_id,
+                item.event_id,
+            )
+            if event_key in events:
+                raise ReviewEvidenceConflictError(
+                    "one event may supply at most one admitted evidence record "
+                    "for an exact association revision"
+                )
+            events.add(event_key)
+
+    def get(self, evidence_id: str) -> ReviewEvidence | None:
+        for item in reversed(self.evidence):
+            if item.evidence_id == evidence_id:
+                return item
+        return None
+
+    def register(self, item: ReviewEvidence) -> "ReviewEvidenceLedger":
+        if self.get(item.evidence_id) is not None:
+            raise ReviewEvidenceReplayError(
+                "review evidence has already been registered"
+            )
+        for prior in self.evidence:
+            if (
+                prior.association_id == item.association_id
+                and prior.memory_revision_id == item.memory_revision_id
+                and prior.event_id == item.event_id
+            ):
+                raise ReviewEvidenceConflictError(
+                    "event is already registered as review evidence for this "
+                    "association revision"
+                )
+        return ReviewEvidenceLedger(evidence=self.evidence + (item,))
+
+    def items_for_ids(
+        self,
+        evidence_ids: tuple[str, ...],
+        *,
+        association_id: str,
+        memory_revision_id: str,
+    ) -> tuple[ReviewEvidence, ...]:
+        items: list[ReviewEvidence] = []
+        for evidence_id in evidence_ids:
+            item = self.get(evidence_id)
+            if item is None:
+                raise ReviewEvidenceNotRegistered(
+                    f"review evidence is not registered: {evidence_id}"
+                )
+            if (
+                item.association_id != association_id
+                or item.memory_revision_id != memory_revision_id
+            ):
+                raise ReviewEvidenceMismatch(
+                    "registered evidence does not match exact review binding"
+                )
+            items.append(item)
+        return tuple(items)
+
+    def validate_assessment(
+        self,
+        assessment: ReviewEvidenceAssessment,
+    ) -> tuple[ReviewEvidence, ...]:
+        items = self.items_for_ids(
+            assessment.evidence_ids,
+            association_id=assessment.association_id,
+            memory_revision_id=assessment.memory_revision_id,
+        )
+        recomputed = assess_review_evidence(
+            items,
+            policy=ReviewEvidencePolicy(
+                minimum_supporting_holdout_events=(
+                    assessment.required_supporting_holdout_events
+                )
+            ),
+        )
+        if recomputed != assessment:
+            raise ReviewEvidenceMismatch(
+                "assessment does not match registered evidence"
+            )
+        return items

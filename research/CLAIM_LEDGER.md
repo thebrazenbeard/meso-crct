@@ -78,3 +78,6 @@ States used here:
 | C-066 | The reference release policy can require multiple distinct supportive holdout events before classifying a revision CLEAR. | TESTED_LOCAL | default reference minimum is two; host policy may require more |
 | C-067 | An evidence assessment should directly mutate learned-association review state. | REJECTED_AS_COLLAPSE | assessment produces a non-mutating review action proposal |
 | C-068 | Evidence risk classification can deterministically propose quarantine/release/hold while leaving mutation authority separate. | TESTED_LOCAL | reference review-action proposal layer |
+| C-069 | A review assessment may mutate memory even when its evidence was never admitted by the memory owner. | REJECTED_AS_COLLAPSE | quarantine/release require registered exact-revision evidence |
+| C-070 | One event can be relabeled into multiple admitted evidence records for the same association revision. | REJECTED_AS_COLLAPSE | append-only evidence ledger permits one admitted record per event/revision |
+| C-071 | AssociationMemory can cross-validate persisted review records against their admitted evidence and recomputed assessment. | TESTED_LOCAL | structural review/evidence integrity |

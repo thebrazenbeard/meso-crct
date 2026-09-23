@@ -57,6 +57,7 @@ class AssociationReviewRecord:
     risk_class: ReviewRiskClass
     assessment_id: str
     evidence_ids: tuple[str, ...]
+    required_supporting_holdout_events: int
     parent_review_id: str | None
     review_id: str
 
@@ -70,6 +71,7 @@ class AssociationReviewRecord:
         risk_class: ReviewRiskClass,
         assessment_id: str,
         evidence_ids: tuple[str, ...],
+        required_supporting_holdout_events: int,
         parent_review_id: str | None,
         review_id: str,
         _token: object | None = None,
@@ -90,6 +92,10 @@ class AssociationReviewRecord:
             raise ValueError("review_version must be >= 1")
         if not evidence_ids:
             raise ValueError("review record requires evidence IDs")
+        if required_supporting_holdout_events < 1:
+            raise ValueError(
+                "required_supporting_holdout_events must be >= 1"
+            )
         object.__setattr__(self, "association_id", association_id)
         object.__setattr__(self, "review_version", review_version)
         object.__setattr__(self, "memory_revision_id", memory_revision_id)
@@ -97,6 +103,11 @@ class AssociationReviewRecord:
         object.__setattr__(self, "risk_class", risk_class)
         object.__setattr__(self, "assessment_id", assessment_id)
         object.__setattr__(self, "evidence_ids", tuple(evidence_ids))
+        object.__setattr__(
+            self,
+            "required_supporting_holdout_events",
+            required_supporting_holdout_events,
+        )
         object.__setattr__(self, "parent_review_id", parent_review_id)
         object.__setattr__(self, "review_id", review_id)
 
@@ -110,6 +121,7 @@ def _review_id(
     risk_class: ReviewRiskClass,
     assessment_id: str,
     evidence_ids: tuple[str, ...],
+    required_supporting_holdout_events: int,
     parent_review_id: str | None,
 ) -> str:
     payload = json.dumps(
@@ -121,6 +133,9 @@ def _review_id(
             "risk_class": risk_class.value,
             "assessment_id": assessment_id,
             "evidence_ids": list(evidence_ids),
+            "required_supporting_holdout_events": (
+                required_supporting_holdout_events
+            ),
             "parent_review_id": parent_review_id,
         },
         sort_keys=True,
@@ -155,6 +170,9 @@ class AssociationReviewRegistry:
                 risk_class=record.risk_class,
                 assessment_id=record.assessment_id,
                 evidence_ids=record.evidence_ids,
+                required_supporting_holdout_events=(
+                    record.required_supporting_holdout_events
+                ),
                 parent_review_id=record.parent_review_id,
             )
             if record.review_id != expected_id:
@@ -288,6 +306,9 @@ class AssociationReviewRegistry:
             risk_class=assessment.risk_class,
             assessment_id=assessment.assessment_id,
             evidence_ids=assessment.evidence_ids,
+            required_supporting_holdout_events=(
+                assessment.required_supporting_holdout_events
+            ),
             parent_review_id=parent_review_id,
         )
         record = AssociationReviewRecord(
@@ -298,6 +319,9 @@ class AssociationReviewRegistry:
             risk_class=assessment.risk_class,
             assessment_id=assessment.assessment_id,
             evidence_ids=assessment.evidence_ids,
+            required_supporting_holdout_events=(
+                assessment.required_supporting_holdout_events
+            ),
             parent_review_id=parent_review_id,
             review_id=review_id,
             _token=_REVIEW_RECORD_TOKEN,
