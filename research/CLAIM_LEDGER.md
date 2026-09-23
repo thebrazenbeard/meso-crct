@@ -25,3 +25,7 @@ States used here:
 | C-014 | Downstream attentional priority must not recursively serve as its own upstream salience source. | TESTED_LOCAL | prevents one direct positive-feedback path |
 | C-015 | Deterministic receipts can bind transition decisions to before/after state and declared provenance. | TESTED_LOCAL | receipt integrity does not prove provenance truth |
 | C-016 | Explicit direct register writes can be excluded from the normal runtime admission path. | TESTED_LOCAL | does not solve forged provenance or indirect reward hacking |
+| C-017 | Visible reward and hidden/system performance can be represented and audited independently. | TESTED_LOCAL | deterministic evaluation fixture |
+| C-018 | Repeated surprise with no learning can be prevented from retaining maximal epistemic value in the reference rule. | TESTED_LOCAL | min(novelty, learning_progress) is a conservative design choice |
+| C-019 | Rising incentive salience with flat/falling hedonic impact can be mechanically detected as a sensitization warning. | TESTED_LOCAL | warning signature only; not a biological diagnosis |
+| C-020 | Deterministic reward-loop, tamper, novelty, and interruptibility traps are sufficient to prove trained-agent robustness. | REJECTED_AS_COLLAPSE | learned/adaptive adversarial qualification remains open |

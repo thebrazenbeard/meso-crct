@@ -3,6 +3,16 @@
 from .adversarial import ProbeResult, run_reference_probes
 from .arbitration import ArbitrationDecision, ArbitrationMode, arbitrate
 from .circuit import CircuitState
+from .evaluation_env import (
+    EvalAction,
+    EvalStep,
+    ProxyTrapEnvironment,
+    SensitizationReport,
+    TrajectoryAudit,
+    audit_trajectory,
+    derive_epistemic_value,
+    detect_incentive_hedonic_divergence,
+)
 from .provenance import Provenance, SourceKind, TransitionReceipt, state_fingerprint
 from .runtime import (
     RuntimeFrame,
@@ -45,4 +55,12 @@ __all__ = [
     "evaluate_transition",
     "ProbeResult",
     "run_reference_probes",
+    "EvalAction",
+    "EvalStep",
+    "ProxyTrapEnvironment",
+    "TrajectoryAudit",
+    "SensitizationReport",
+    "audit_trajectory",
+    "derive_epistemic_value",
+    "detect_incentive_hedonic_divergence",
 ]
