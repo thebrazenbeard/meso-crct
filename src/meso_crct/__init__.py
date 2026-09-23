@@ -27,6 +27,15 @@ from .homeostasis import (
     NeedAxis,
     modulate_incentive_salience,
 )
+from .memory import (
+    AssociationMemory,
+    AssociationNotFound,
+    AssociationRevision,
+    MemoryVersionConflict,
+    PlasticityReplayError,
+    apply_candidate,
+    revert_last,
+)
 from .plasticity import (
     PlasticityCandidate,
     PlasticityPolicy,
@@ -78,6 +87,13 @@ __all__ = [
     "HomeostaticState",
     "HomeostaticModulation",
     "modulate_incentive_salience",
+    "AssociationRevision",
+    "AssociationMemory",
+    "AssociationNotFound",
+    "MemoryVersionConflict",
+    "PlasticityReplayError",
+    "apply_candidate",
+    "revert_last",
     "ArbitrationMode",
     "ArbitrationDecision",
     "arbitrate",
