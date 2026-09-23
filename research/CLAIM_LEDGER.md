@@ -81,3 +81,5 @@ States used here:
 | C-069 | A review assessment may mutate memory even when its evidence was never admitted by the memory owner. | REJECTED_AS_COLLAPSE | quarantine/release require registered exact-revision evidence |
 | C-070 | One event can be relabeled into multiple admitted evidence records for the same association revision. | REJECTED_AS_COLLAPSE | append-only evidence ledger permits one admitted record per event/revision |
 | C-071 | AssociationMemory can cross-validate persisted review records against their admitted evidence and recomputed assessment. | TESTED_LOCAL | structural review/evidence integrity |
+| C-072 | A review proposal remains current after evidence, learned revision, or review disposition changes. | REJECTED_AS_COLLAPSE | proposal validation binds all three currentness dimensions |
+| C-073 | Review recommendation currentness can be validated without granting mutation authority. | TESTED_LOCAL | non-mutating proposal validation |

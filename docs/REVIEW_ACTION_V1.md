@@ -38,3 +38,22 @@ This mirrors the larger MESO-CRCT authority boundary:
 ```text
 evidence conclusion != permission != effect
 ```
+
+
+## Proposal currentness
+
+Each proposal also snapshots the exact review-evidence ledger fingerprint and
+current review disposition used to derive it.
+
+`validate_review_action_proposal()` rejects a proposal if, before action:
+
+- the learned association revision changes;
+- the evidence ledger changes;
+- the current review disposition changes;
+- the supplied assessment no longer matches;
+- the derived recommendation would now differ.
+
+This makes proposal generation explicitly time-of-check / time-of-use safe at
+the reference-state level.
+
+Validation itself is non-mutating.

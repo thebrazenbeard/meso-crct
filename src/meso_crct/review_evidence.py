@@ -338,6 +338,14 @@ class ReviewEvidenceLedger:
                 )
             events.add(event_key)
 
+    @property
+    def fingerprint(self) -> str:
+        payload = json.dumps(
+            [item.evidence_id for item in self.evidence],
+            separators=(",", ":"),
+        )
+        return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
     def get(self, evidence_id: str) -> ReviewEvidence | None:
         for item in reversed(self.evidence):
             if item.evidence_id == evidence_id:

@@ -126,7 +126,9 @@ from .review import (
 from .review_action import (
     ReviewActionKind,
     ReviewActionProposal,
+    ReviewActionStaleError,
     propose_review_action,
+    validate_review_action_proposal,
 )
 from .review_evidence import (
     ReviewEvidence,
@@ -235,7 +237,9 @@ __all__ = [
     "ReviewAssessmentInsufficient",
     "ReviewActionKind",
     "ReviewActionProposal",
+    "ReviewActionStaleError",
     "propose_review_action",
+    "validate_review_action_proposal",
     "ReviewEvidenceKind",
     "ReviewEvidenceOutcome",
     "ReviewEvidencePolicy",
