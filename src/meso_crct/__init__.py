@@ -91,6 +91,13 @@ from .recall import (
     apply_recall_motivation,
     recall_association,
 )
+from .recall_resolution import (
+    RecallDisposition,
+    RecallEventMismatch,
+    RecallResolution,
+    RecallResolutionPolicy,
+    resolve_recall_influences,
+)
 from .runtime import (
     RuntimeFrame,
     RuntimePhase,
@@ -199,6 +206,11 @@ __all__ = [
     "RecallReplayError",
     "recall_association",
     "apply_recall_motivation",
+    "RecallDisposition",
+    "RecallEventMismatch",
+    "RecallResolution",
+    "RecallResolutionPolicy",
+    "resolve_recall_influences",
     "SelectionPolicy",
     "TargetState",
     "TargetEvaluation",

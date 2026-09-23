@@ -1,8 +1,4 @@
-"""Typed action tendency derived after target selection.
-
-Target priority answers what receives processing. Action tendency answers the
-current directional relation toward that selected target.
-"""
+"""Typed action tendency derived after target selection."""
 
 from __future__ import annotations
 
@@ -12,6 +8,7 @@ import math
 
 from .arbitration import ArbitrationMode
 from .recall import RecallInfluence
+from .recall_resolution import RecallDisposition, RecallResolution
 from .selection import SelectionResult
 
 
@@ -56,6 +53,7 @@ class ActionTendency:
     source: str
     selection_mode: str | None
     recall_revision_id: str | None
+    recall_revision_ids: tuple[str, ...]
     recall_event_id: str | None
 
     def __init__(
@@ -67,6 +65,7 @@ class ActionTendency:
         source: str,
         selection_mode: str | None,
         recall_revision_id: str | None = None,
+        recall_revision_ids: tuple[str, ...] = (),
         recall_event_id: str | None = None,
         _token: object | None = None,
     ) -> None:
@@ -82,6 +81,7 @@ class ActionTendency:
         object.__setattr__(self, "source", source)
         object.__setattr__(self, "selection_mode", selection_mode)
         object.__setattr__(self, "recall_revision_id", recall_revision_id)
+        object.__setattr__(self, "recall_revision_ids", tuple(recall_revision_ids))
         object.__setattr__(self, "recall_event_id", recall_event_id)
 
 
@@ -93,15 +93,30 @@ def _make(
     source: str,
     selection_mode: str | None,
     recall: RecallInfluence | None = None,
+    resolution: RecallResolution | None = None,
 ) -> ActionTendency:
+    if recall is not None:
+        revision_id = recall.memory_revision_id
+        revision_ids = (recall.memory_revision_id,)
+        event_id = recall.cue_event_id
+    elif resolution is not None:
+        revision_id = None
+        revision_ids = resolution.memory_revision_ids
+        event_id = resolution.cue_event_id
+    else:
+        revision_id = None
+        revision_ids = ()
+        event_id = None
+
     return ActionTendency(
         target_id=target_id,
         kind=kind,
         strength=strength,
         source=source,
         selection_mode=selection_mode,
-        recall_revision_id=None if recall is None else recall.memory_revision_id,
-        recall_event_id=None if recall is None else recall.cue_event_id,
+        recall_revision_id=revision_id,
+        recall_revision_ids=revision_ids,
+        recall_event_id=event_id,
         _token=_ACTION_TENDENCY_TOKEN,
     )
 
@@ -110,14 +125,20 @@ def derive_action_tendency(
     selection: SelectionResult,
     *,
     recall: RecallInfluence | None = None,
+    recall_resolution: RecallResolution | None = None,
     recall_target_id: str | None = None,
     policy: ActionTendencyPolicy | None = None,
 ) -> ActionTendency:
     """Derive direction after selection without mutating circuit state."""
     policy = ActionTendencyPolicy() if policy is None else policy
 
+    if recall is not None and recall_resolution is not None:
+        raise ValueError("provide either recall or recall_resolution, not both")
+
+    has_recall_evidence = recall is not None or recall_resolution is not None
+
     if not selection.selected:
-        if recall is not None or recall_target_id is not None:
+        if has_recall_evidence or recall_target_id is not None:
             raise ValueError("recall direction cannot bind when no target is selected")
         return _make(
             target_id=None,
@@ -132,7 +153,7 @@ def derive_action_tendency(
     assert target_id is not None
     assert decision is not None
 
-    if recall is not None:
+    if has_recall_evidence:
         if recall_target_id != target_id:
             raise ValueError("recall evidence must be bound to the selected target")
     elif recall_target_id is not None:
@@ -146,6 +167,35 @@ def derive_action_tendency(
             source="protective_state",
             selection_mode=decision.mode.value,
         )
+
+    if recall_resolution is not None:
+        if recall_resolution.disposition is RecallDisposition.AVOID:
+            return _make(
+                target_id=target_id,
+                kind=ActionTendencyKind.LEARNED_WITHDRAW,
+                strength=recall_resolution.learned_avoidance_support,
+                source="learned_association_resolution",
+                selection_mode=decision.mode.value,
+                resolution=recall_resolution,
+            )
+        if recall_resolution.disposition is RecallDisposition.APPROACH:
+            return _make(
+                target_id=target_id,
+                kind=ActionTendencyKind.APPROACH,
+                strength=recall_resolution.approach_support,
+                source="learned_association_resolution",
+                selection_mode=decision.mode.value,
+                resolution=recall_resolution,
+            )
+        if recall_resolution.disposition is RecallDisposition.CONFLICT:
+            return _make(
+                target_id=target_id,
+                kind=ActionTendencyKind.UNCOMMITTED,
+                strength=recall_resolution.dominant_support,
+                source="recall_direction_conflict",
+                selection_mode=decision.mode.value,
+                resolution=recall_resolution,
+            )
 
     if recall is not None:
         threshold = policy.minimum_recall_directional_support
