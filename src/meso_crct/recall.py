@@ -58,6 +58,7 @@ class RecallInfluence:
     memory_revision_id: str
     cue_receipt_id: str
     cue_event_id: str
+    cue_after_fingerprint: str
     cue_match: float
     learned_strength: float
     signed_influence: float
@@ -73,6 +74,7 @@ class RecallInfluence:
         memory_revision_id: str,
         cue_receipt_id: str,
         cue_event_id: str,
+        cue_after_fingerprint: str,
         cue_match: float,
         learned_strength: float,
         signed_influence: float,
@@ -89,6 +91,7 @@ class RecallInfluence:
             ("memory_revision_id", memory_revision_id),
             ("cue_receipt_id", cue_receipt_id),
             ("cue_event_id", cue_event_id),
+            ("cue_after_fingerprint", cue_after_fingerprint),
         ):
             if not value.strip():
                 raise ValueError(f"{name} must be non-empty")
@@ -96,6 +99,7 @@ class RecallInfluence:
         object.__setattr__(self, "memory_revision_id", memory_revision_id)
         object.__setattr__(self, "cue_receipt_id", cue_receipt_id)
         object.__setattr__(self, "cue_event_id", cue_event_id)
+        object.__setattr__(self, "cue_after_fingerprint", cue_after_fingerprint)
         object.__setattr__(self, "cue_match", _unit(cue_match, name="cue_match"))
         object.__setattr__(self, "learned_strength", float(learned_strength))
         object.__setattr__(self, "signed_influence", float(signed_influence))
@@ -144,6 +148,7 @@ def recall_association(
         memory_revision_id=revision.revision_id,
         cue_receipt_id=cue_receipt.receipt_id,
         cue_event_id=cue_receipt.event_id,
+        cue_after_fingerprint=cue_receipt.after_fingerprint,
         cue_match=match,
         learned_strength=revision.strength,
         signed_influence=signed,
