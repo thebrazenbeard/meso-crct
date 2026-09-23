@@ -4,7 +4,9 @@ from .adversarial import ProbeResult, run_reference_probes
 from .allocation import (
     AllocationAudit,
     AllocationSample,
+    AllocationWindow,
     GoalObligation,
+    audit_allocation_window,
     audit_attention_budget,
 )
 from .arbitration import ArbitrationDecision, ArbitrationMode, arbitrate
@@ -122,8 +124,10 @@ __all__ = [
     "arbitrate",
     "GoalObligation",
     "AllocationSample",
+    "AllocationWindow",
     "AllocationAudit",
     "audit_attention_budget",
+    "audit_allocation_window",
     "SourceKind",
     "Provenance",
     "VerifiedProvenance",

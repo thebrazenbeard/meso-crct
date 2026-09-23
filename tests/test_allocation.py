@@ -1,7 +1,14 @@
 from meso_crct import (
     AllocationSample,
+    AllocationWindow,
+    CircuitState,
     GoalObligation,
+    RewardState,
+    SalienceState,
+    TargetState,
+    audit_allocation_window,
     audit_attention_budget,
+    select_target,
 )
 
 
@@ -64,3 +71,104 @@ def test_goal_threshold_is_user_supplied_not_equal_share_assumption():
     obligations = [GoalObligation("goal:background", 0.10)]
     audit = audit_attention_budget(samples, obligations)
     assert "goal_neglect" not in audit.flags
+
+
+def test_allocation_window_records_actual_selection_results():
+    window = AllocationWindow()
+    result = select_target([
+        TargetState(
+            "goal:a",
+            CircuitState(
+                salience=SalienceState(semantic_relevance=0.8),
+            ),
+        ),
+        TargetState(
+            "goal:b",
+            CircuitState(
+                salience=SalienceState(semantic_relevance=0.3),
+            ),
+        ),
+    ])
+    window = window.record(result)
+    assert len(window.samples) == 1
+    assert window.samples[0].target_id == "goal:a"
+    assert window.no_selection_cycles == 0
+
+
+def test_quiescent_selection_cycle_is_recorded_without_fake_sample():
+    window = AllocationWindow().record(
+        select_target([
+            TargetState("one"),
+            TargetState("two"),
+        ])
+    )
+    assert window.samples == ()
+    assert window.no_selection_cycles == 1
+
+
+def test_real_local_selection_history_drives_crowdout_audit():
+    window = AllocationWindow()
+
+    for _ in range(9):
+        result = select_target([
+            TargetState(
+                "target:loop",
+                CircuitState(
+                    salience=SalienceState(incentive_salience=1.0),
+                ),
+            ),
+            TargetState(
+                "goal:maintenance",
+                CircuitState(
+                    salience=SalienceState(semantic_relevance=0.4),
+                ),
+            ),
+        ])
+        window = window.record(result)
+
+    maintenance_only = select_target([
+        TargetState(
+            "goal:maintenance",
+            CircuitState(
+                salience=SalienceState(semantic_relevance=0.4),
+            ),
+        )
+    ])
+    window = window.record(maintenance_only)
+
+    audit = audit_allocation_window(
+        window,
+        [GoalObligation("goal:maintenance", 0.20)],
+    )
+    assert audit.dominant_target == "target:loop"
+    assert "goal_neglect" in audit.flags
+    assert "target_crowd_out" in audit.flags
+    assert "incentive_capture" in audit.flags
+
+
+def test_real_protective_selections_remain_exempt_from_ordinary_share():
+    window = AllocationWindow()
+    for _ in range(5):
+        result = select_target([
+            TargetState(
+                "hazard:fire",
+                CircuitState(
+                    reward=RewardState(hazard=1.0, avoidance=1.0),
+                ),
+            ),
+            TargetState(
+                "goal:maintenance",
+                CircuitState(
+                    salience=SalienceState(semantic_relevance=0.8),
+                ),
+            ),
+        ])
+        window = window.record(result)
+
+    audit = audit_allocation_window(
+        window,
+        [GoalObligation("goal:maintenance", 0.20)],
+    )
+    assert audit.protective_samples == 5
+    assert audit.nonprotective_samples == 0
+    assert audit.passed

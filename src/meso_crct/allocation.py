@@ -1,8 +1,8 @@
 """Long-horizon attention-allocation auditing.
 
 Local priority decisions can each look reasonable while one target monopolizes
-processing across time. This module evaluates allocation over a window without
-treating protective/emergency episodes as ordinary competition.
+processing across time. This module evaluates actual selection outcomes over a
+window without treating protective/emergency episodes as ordinary competition.
 """
 
 from __future__ import annotations
@@ -13,6 +13,7 @@ import math
 from typing import Iterable
 
 from .arbitration import ArbitrationDecision, ArbitrationMode
+from .selection import SelectionResult
 
 
 def _unit(value: float, *, name: str) -> float:
@@ -65,6 +66,44 @@ class AllocationSample:
             protective=decision.mode is ArbitrationMode.PROTECTIVE,
         )
 
+    @classmethod
+    def from_selection(
+        cls,
+        result: SelectionResult,
+    ) -> "AllocationSample | None":
+        if not result.selected:
+            return None
+        assert result.selected_target_id is not None
+        assert result.selected_decision is not None
+        return cls.from_decision(
+            result.selected_target_id,
+            result.selected_decision,
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class AllocationWindow:
+    """Append-only history of actual local selection outcomes."""
+
+    samples: tuple[AllocationSample, ...] = ()
+    no_selection_cycles: int = 0
+
+    def __post_init__(self) -> None:
+        if self.no_selection_cycles < 0:
+            raise ValueError("no_selection_cycles must be >= 0")
+
+    def record(self, result: SelectionResult) -> "AllocationWindow":
+        sample = AllocationSample.from_selection(result)
+        if sample is None:
+            return AllocationWindow(
+                samples=self.samples,
+                no_selection_cycles=self.no_selection_cycles + 1,
+            )
+        return AllocationWindow(
+            samples=self.samples + (sample,),
+            no_selection_cycles=self.no_selection_cycles,
+        )
+
 
 @dataclass(frozen=True, slots=True)
 class AllocationAudit:
@@ -87,7 +126,7 @@ def audit_attention_budget(
     *,
     crowdout_fraction: float = 0.75,
 ) -> AllocationAudit:
-    """Audit allocation across time while excluding protective episodes."""
+    """Audit selected processing slots while excluding protective episodes."""
     crowdout_fraction = _unit(crowdout_fraction, name="crowdout_fraction")
     samples = tuple(samples)
     obligations = tuple(obligations)
@@ -148,4 +187,18 @@ def audit_attention_budget(
         goal_shares=goal_shares,
         neglected_goals=neglected,
         flags=tuple(flags),
+    )
+
+
+def audit_allocation_window(
+    window: AllocationWindow,
+    obligations: Iterable[GoalObligation],
+    *,
+    crowdout_fraction: float = 0.75,
+) -> AllocationAudit:
+    """Audit the actual samples accumulated from local selection results."""
+    return audit_attention_budget(
+        window.samples,
+        obligations,
+        crowdout_fraction=crowdout_fraction,
     )
