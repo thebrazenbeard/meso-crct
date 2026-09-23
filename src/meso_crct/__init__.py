@@ -13,6 +13,11 @@ from .allocation_guard import (
     AllocationGuardResult,
     select_with_allocation_guard,
 )
+from .appraisal import (
+    AppraisedTarget,
+    TargetAppraisalInput,
+    build_target_appraisal,
+)
 from .arbitration import ArbitrationDecision, ArbitrationMode, arbitrate
 from .circuit import CircuitState
 from .control import (
@@ -133,6 +138,9 @@ __all__ = [
     "PlasticityReplayError",
     "apply_candidate",
     "revert_last",
+    "TargetAppraisalInput",
+    "AppraisedTarget",
+    "build_target_appraisal",
     "ArbitrationMode",
     "ArbitrationDecision",
     "arbitrate",
