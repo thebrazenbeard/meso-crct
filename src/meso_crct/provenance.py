@@ -40,10 +40,25 @@ class Provenance:
             raise ValueError("source_id must be non-empty")
 
 
-@dataclass(frozen=True, slots=True)
+_VERIFIED_PROVENANCE_TOKEN = object()
+
+
+@dataclass(frozen=True, slots=True, init=False)
 class VerifiedProvenance:
     claim: Provenance
     verifier_id: str
+
+    def __init__(
+        self,
+        claim: Provenance,
+        verifier_id: str,
+        *,
+        _token: object | None = None,
+    ) -> None:
+        if _token is not _VERIFIED_PROVENANCE_TOKEN:
+            raise TypeError("VerifiedProvenance must be created by ProvenanceVerifier")
+        object.__setattr__(self, "claim", claim)
+        object.__setattr__(self, "verifier_id", verifier_id)
 
     @property
     def source_kind(self) -> SourceKind:
@@ -89,7 +104,11 @@ class ProvenanceVerifier:
             raise ProvenanceVerificationError(
                 "source assertion is not bound by this verifier"
             )
-        return VerifiedProvenance(claim=claim, verifier_id=self._verifier_id)
+        return VerifiedProvenance(
+            claim=claim,
+            verifier_id=self._verifier_id,
+            _token=_VERIFIED_PROVENANCE_TOKEN,
+        )
 
 
 def state_fingerprint(state: CircuitState) -> str:
