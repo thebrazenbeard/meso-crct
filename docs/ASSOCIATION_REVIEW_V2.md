@@ -37,7 +37,7 @@ contradictory counterexample
 contradictory holdout
     -> SUSPECTED_OVERGENERALIZATION
 
-supporting holdout + no contradictions
+at least two distinct supporting holdout events + no contradictions
     -> CLEAR
 
 anything weaker
@@ -59,8 +59,12 @@ history and association strength remain untouched.
 
 ## Release rule
 
-Release requires a current-revision `CLEAR` assessment with at least one
-affirmative holdout and zero contradictory evidence.
+Release requires a current-revision `CLEAR` assessment with the policy's
+minimum number of **distinct supportive holdout events** and zero contradictory
+evidence. The default reference policy requires two distinct holdout events.
+
+Multiple labels/evidence records tied to the same event count as one event, so
+duplicating an observation cannot manufacture clearance.
 
 A reason string alone cannot clear an association.
 

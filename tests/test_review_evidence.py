@@ -10,6 +10,7 @@ from meso_crct import (
     ReviewEvidenceKind,
     ReviewEvidenceMismatch,
     ReviewEvidenceOutcome,
+    ReviewEvidencePolicy,
     ReviewRiskClass,
     SalienceState,
     SourceKind,
@@ -41,14 +42,14 @@ def receipt(stream: str):
     )
 
 
-def evidence(kind, outcome, *, association="cue->outcome", revision="rev-1", ref="case"):
+def evidence(kind, outcome, *, association="cue->outcome", revision="rev-1", ref="case", receipt_obj=None):
     return bind_review_evidence(
         association_id=association,
         memory_revision_id=revision,
         kind=kind,
         outcome=outcome,
         evidence_ref=ref,
-        receipt=receipt(ref),
+        receipt=receipt(ref) if receipt_obj is None else receipt_obj,
     )
 
 
@@ -74,7 +75,9 @@ def test_assessment_cannot_be_constructed_directly():
             risk_class=ReviewRiskClass.CLEAR,
             evidence_ids=("fake",),
             supporting_holdout_ids=("fake",),
+            supporting_holdout_event_ids=("fake-event",),
             contradicting_evidence_ids=(),
+            required_supporting_holdout_events=1,
             assessment_id="fake",
         )
 
@@ -102,16 +105,74 @@ def test_holdout_contradiction_is_suspected_overgeneralization():
     )
 
 
-def test_supporting_holdout_with_no_contradiction_is_clear():
+def test_one_supporting_holdout_is_insufficient_under_default_policy():
     assessment = assess_review_evidence([
         evidence(
             ReviewEvidenceKind.HOLDOUT,
             ReviewEvidenceOutcome.SUPPORTS,
         )
     ])
+    assert assessment.risk_class is ReviewRiskClass.INSUFFICIENT
+    assert assessment.required_supporting_holdout_events == 2
+
+
+def test_two_distinct_supporting_holdout_events_are_clear():
+    assessment = assess_review_evidence([
+        evidence(
+            ReviewEvidenceKind.HOLDOUT,
+            ReviewEvidenceOutcome.SUPPORTS,
+            ref="holdout-1",
+        ),
+        evidence(
+            ReviewEvidenceKind.HOLDOUT,
+            ReviewEvidenceOutcome.SUPPORTS,
+            ref="holdout-2",
+        ),
+    ])
     assert assessment.risk_class is ReviewRiskClass.CLEAR
-    assert assessment.supporting_holdout_ids
-    assert not assessment.contradicting_evidence_ids
+    assert len(assessment.supporting_holdout_event_ids) == 2
+
+
+def test_duplicate_labels_on_same_holdout_event_do_not_satisfy_diversity():
+    shared_receipt = receipt("same-holdout-event")
+    assessment = assess_review_evidence([
+        evidence(
+            ReviewEvidenceKind.HOLDOUT,
+            ReviewEvidenceOutcome.SUPPORTS,
+            ref="label-a",
+            receipt_obj=shared_receipt,
+        ),
+        evidence(
+            ReviewEvidenceKind.HOLDOUT,
+            ReviewEvidenceOutcome.SUPPORTS,
+            ref="label-b",
+            receipt_obj=shared_receipt,
+        ),
+    ])
+    assert len(assessment.supporting_holdout_ids) == 2
+    assert len(assessment.supporting_holdout_event_ids) == 1
+    assert assessment.risk_class is ReviewRiskClass.INSUFFICIENT
+
+
+def test_policy_can_explicitly_require_more_distinct_holdout_events():
+    assessment = assess_review_evidence(
+        [
+            evidence(
+                ReviewEvidenceKind.HOLDOUT,
+                ReviewEvidenceOutcome.SUPPORTS,
+                ref="holdout-1",
+            ),
+            evidence(
+                ReviewEvidenceKind.HOLDOUT,
+                ReviewEvidenceOutcome.SUPPORTS,
+                ref="holdout-2",
+            ),
+        ],
+        policy=ReviewEvidencePolicy(
+            minimum_supporting_holdout_events=3
+        ),
+    )
+    assert assessment.risk_class is ReviewRiskClass.INSUFFICIENT
 
 
 def test_inconclusive_only_evidence_is_insufficient():

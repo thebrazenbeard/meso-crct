@@ -74,3 +74,5 @@ States used here:
 | C-062 | Contradictory counterexample and holdout evidence can be distinguished in review state. | TESTED_LOCAL | counterexample contradiction -> CONTRADICTED; holdout contradiction -> SUSPECTED_OVERGENERALIZATION |
 | C-063 | Release can require affirmative current-revision holdout support with zero contradictory evidence. | TESTED_LOCAL | evidence-driven release gate |
 | C-064 | Evidence gathered for one learned revision may clear a later changed revision. | REJECTED_AS_COLLAPSE | evidence assessment is exact-revision bound |
+| C-065 | Multiple supportive evidence labels attached to one holdout event can satisfy release diversity. | REJECTED_AS_COLLAPSE | release qualification counts distinct event IDs |
+| C-066 | The reference release policy can require multiple distinct supportive holdout events before classifying a revision CLEAR. | TESTED_LOCAL | default reference minimum is two; host policy may require more |

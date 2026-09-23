@@ -12,6 +12,7 @@ from meso_crct import (
     Provenance,
     ProvenanceVerifier,
     ReviewAssessmentInsufficient,
+    ReviewAssessmentMismatch,
     ReviewDisposition,
     ReviewEvidenceKind,
     ReviewEvidenceOutcome,
@@ -135,12 +136,22 @@ def quarantine_assessment(memory, ref="negative-transfer"):
 
 
 def clear_assessment(memory, ref="clear-holdout"):
-    return assessment_for(
-        memory,
-        kind=ReviewEvidenceKind.HOLDOUT,
-        outcome=ReviewEvidenceOutcome.SUPPORTS,
-        ref=ref,
-    )
+    revision = memory.current("cue->outcome")
+    assert revision is not None
+    items = []
+    for suffix in ("a", "b"):
+        evidence_ref = f"{ref}-{suffix}"
+        items.append(
+            bind_review_evidence(
+                association_id="cue->outcome",
+                memory_revision_id=revision.revision_id,
+                kind=ReviewEvidenceKind.HOLDOUT,
+                outcome=ReviewEvidenceOutcome.SUPPORTS,
+                evidence_ref=evidence_ref,
+                receipt=cue_receipt(evidence_ref),
+            )
+        )
+    return assess_review_evidence(items)
 
 
 def test_review_record_cannot_be_constructed_directly():
@@ -240,7 +251,7 @@ def test_learning_change_after_release_makes_review_stale_until_new_evidence():
             cue_receipt=cue_receipt("cue-after-change"),
         )
 
-    with pytest.raises(Exception):
+    with pytest.raises(ReviewAssessmentMismatch):
         release_association(
             changed,
             "cue->outcome",

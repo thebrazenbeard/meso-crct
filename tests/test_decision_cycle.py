@@ -105,25 +105,31 @@ def recall_for_current_appraisal(
 def review_assessment(memory, association_id, *, outcome, ref):
     revision = memory.current(association_id)
     assert revision is not None
-    state = CircuitState(
-        salience=SalienceState(semantic_relevance=0.5),
-    )
-    _, event = EventSequencer(ref).issue()
-    receipt = evaluate_transition(
-        before=CircuitState(),
-        after=state,
-        provenance=verified(ref),
-        event=event,
-    )
-    item = bind_review_evidence(
-        association_id=association_id,
-        memory_revision_id=revision.revision_id,
-        kind=ReviewEvidenceKind.HOLDOUT,
-        outcome=outcome,
-        evidence_ref=ref,
-        receipt=receipt,
-    )
-    return assess_review_evidence([item])
+    items = []
+    suffixes = ("a", "b") if outcome is ReviewEvidenceOutcome.SUPPORTS else ("a",)
+    for suffix in suffixes:
+        evidence_ref = f"{ref}-{suffix}"
+        state = CircuitState(
+            salience=SalienceState(semantic_relevance=0.5),
+        )
+        _, event = EventSequencer(evidence_ref).issue()
+        receipt = evaluate_transition(
+            before=CircuitState(),
+            after=state,
+            provenance=verified(evidence_ref),
+            event=event,
+        )
+        items.append(
+            bind_review_evidence(
+                association_id=association_id,
+                memory_revision_id=revision.revision_id,
+                kind=ReviewEvidenceKind.HOLDOUT,
+                outcome=outcome,
+                evidence_ref=evidence_ref,
+                receipt=receipt,
+            )
+        )
+    return assess_review_evidence(items)
 
 def cue_appraisal(target_id="cue-target"):
     return build_target_appraisal(

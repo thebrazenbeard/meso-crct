@@ -33,6 +33,17 @@ class ReviewEvidenceMismatch(ValueError):
     pass
 
 
+@dataclass(frozen=True, slots=True)
+class ReviewEvidencePolicy:
+    minimum_supporting_holdout_events: int = 2
+
+    def __post_init__(self) -> None:
+        if self.minimum_supporting_holdout_events < 1:
+            raise ValueError(
+                "minimum_supporting_holdout_events must be >= 1"
+            )
+
+
 _EVIDENCE_TOKEN = object()
 _ASSESSMENT_TOKEN = object()
 
@@ -90,7 +101,9 @@ class ReviewEvidenceAssessment:
     risk_class: ReviewRiskClass
     evidence_ids: tuple[str, ...]
     supporting_holdout_ids: tuple[str, ...]
+    supporting_holdout_event_ids: tuple[str, ...]
     contradicting_evidence_ids: tuple[str, ...]
+    required_supporting_holdout_events: int
     assessment_id: str
 
     def __init__(
@@ -101,7 +114,9 @@ class ReviewEvidenceAssessment:
         risk_class: ReviewRiskClass,
         evidence_ids: tuple[str, ...],
         supporting_holdout_ids: tuple[str, ...],
+        supporting_holdout_event_ids: tuple[str, ...],
         contradicting_evidence_ids: tuple[str, ...],
+        required_supporting_holdout_events: int,
         assessment_id: str,
         _token: object | None = None,
     ) -> None:
@@ -115,6 +130,8 @@ class ReviewEvidenceAssessment:
             raise ValueError("memory_revision_id must be non-empty")
         if not evidence_ids:
             raise ValueError("assessment requires at least one evidence item")
+        if required_supporting_holdout_events < 1:
+            raise ValueError("required_supporting_holdout_events must be >= 1")
         if not assessment_id.strip():
             raise ValueError("assessment_id must be non-empty")
         object.__setattr__(self, "association_id", association_id)
@@ -124,8 +141,18 @@ class ReviewEvidenceAssessment:
         object.__setattr__(self, "supporting_holdout_ids", tuple(supporting_holdout_ids))
         object.__setattr__(
             self,
+            "supporting_holdout_event_ids",
+            tuple(supporting_holdout_event_ids),
+        )
+        object.__setattr__(
+            self,
             "contradicting_evidence_ids",
             tuple(contradicting_evidence_ids),
+        )
+        object.__setattr__(
+            self,
+            "required_supporting_holdout_events",
+            required_supporting_holdout_events,
         )
         object.__setattr__(self, "assessment_id", assessment_id)
 
@@ -166,8 +193,11 @@ def bind_review_evidence(
 
 def assess_review_evidence(
     evidence: Iterable[ReviewEvidence],
+    *,
+    policy: ReviewEvidencePolicy | None = None,
 ) -> ReviewEvidenceAssessment:
     """Classify exact-revision negative-transfer evidence deterministically."""
+    policy = ReviewEvidencePolicy() if policy is None else policy
     evidence = tuple(evidence)
     if not evidence:
         raise ValueError("at least one review evidence item is required")
@@ -198,6 +228,18 @@ def assess_review_evidence(
             )
         )
     )
+    supporting_holdout_events = tuple(
+        sorted(
+            {
+                item.event_id
+                for item in evidence
+                if (
+                    item.kind is ReviewEvidenceKind.HOLDOUT
+                    and item.outcome is ReviewEvidenceOutcome.SUPPORTS
+                )
+            }
+        )
+    )
 
     counterexample_contradiction = any(
         item.kind is ReviewEvidenceKind.COUNTEREXAMPLE
@@ -214,7 +256,11 @@ def assess_review_evidence(
         risk = ReviewRiskClass.CONTRADICTED
     elif holdout_contradiction:
         risk = ReviewRiskClass.SUSPECTED_OVERGENERALIZATION
-    elif supporting_holdouts and not contradicting:
+    elif (
+        len(supporting_holdout_events)
+        >= policy.minimum_supporting_holdout_events
+        and not contradicting
+    ):
         risk = ReviewRiskClass.CLEAR
     else:
         risk = ReviewRiskClass.INSUFFICIENT
@@ -226,7 +272,11 @@ def assess_review_evidence(
         "risk_class": risk.value,
         "evidence_ids": list(evidence_ids),
         "supporting_holdout_ids": list(supporting_holdouts),
+        "supporting_holdout_event_ids": list(supporting_holdout_events),
         "contradicting_evidence_ids": list(contradicting),
+        "required_supporting_holdout_events": (
+            policy.minimum_supporting_holdout_events
+        ),
     }
     canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"))
     assessment_id = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
@@ -237,7 +287,11 @@ def assess_review_evidence(
         risk_class=risk,
         evidence_ids=evidence_ids,
         supporting_holdout_ids=supporting_holdouts,
+        supporting_holdout_event_ids=supporting_holdout_events,
         contradicting_evidence_ids=contradicting,
+        required_supporting_holdout_events=(
+            policy.minimum_supporting_holdout_events
+        ),
         assessment_id=assessment_id,
         _token=_ASSESSMENT_TOKEN,
     )
