@@ -1,8 +1,4 @@
-"""Append-only review state for learned associations.
-
-Review state does not alter learned strength or erase learning history. It gates
-whether an exact learned revision is currently admitted for recall.
-"""
+"""Append-only review state for learned associations."""
 
 from __future__ import annotations
 
@@ -10,6 +6,8 @@ from dataclasses import dataclass
 from enum import StrEnum
 import hashlib
 import json
+
+from .review_evidence import ReviewEvidenceAssessment, ReviewRiskClass
 
 
 class ReviewDisposition(StrEnum):
@@ -31,6 +29,14 @@ class ReviewIntegrityError(ValueError):
     pass
 
 
+class ReviewAssessmentMismatch(ValueError):
+    pass
+
+
+class ReviewAssessmentInsufficient(ValueError):
+    pass
+
+
 class AssociationQuarantinedError(ValueError):
     pass
 
@@ -48,7 +54,9 @@ class AssociationReviewRecord:
     review_version: int
     memory_revision_id: str
     disposition: ReviewDisposition
-    reason: str
+    risk_class: ReviewRiskClass
+    assessment_id: str
+    evidence_ids: tuple[str, ...]
     parent_review_id: str | None
     review_id: str
 
@@ -59,7 +67,9 @@ class AssociationReviewRecord:
         review_version: int,
         memory_revision_id: str,
         disposition: ReviewDisposition,
-        reason: str,
+        risk_class: ReviewRiskClass,
+        assessment_id: str,
+        evidence_ids: tuple[str, ...],
         parent_review_id: str | None,
         review_id: str,
         _token: object | None = None,
@@ -71,18 +81,22 @@ class AssociationReviewRecord:
         for name, value in (
             ("association_id", association_id),
             ("memory_revision_id", memory_revision_id),
-            ("reason", reason),
+            ("assessment_id", assessment_id),
             ("review_id", review_id),
         ):
             if not value.strip():
                 raise ValueError(f"{name} must be non-empty")
         if review_version < 1:
             raise ValueError("review_version must be >= 1")
+        if not evidence_ids:
+            raise ValueError("review record requires evidence IDs")
         object.__setattr__(self, "association_id", association_id)
         object.__setattr__(self, "review_version", review_version)
         object.__setattr__(self, "memory_revision_id", memory_revision_id)
         object.__setattr__(self, "disposition", disposition)
-        object.__setattr__(self, "reason", reason)
+        object.__setattr__(self, "risk_class", risk_class)
+        object.__setattr__(self, "assessment_id", assessment_id)
+        object.__setattr__(self, "evidence_ids", tuple(evidence_ids))
         object.__setattr__(self, "parent_review_id", parent_review_id)
         object.__setattr__(self, "review_id", review_id)
 
@@ -93,7 +107,9 @@ def _review_id(
     review_version: int,
     memory_revision_id: str,
     disposition: ReviewDisposition,
-    reason: str,
+    risk_class: ReviewRiskClass,
+    assessment_id: str,
+    evidence_ids: tuple[str, ...],
     parent_review_id: str | None,
 ) -> str:
     payload = json.dumps(
@@ -102,7 +118,9 @@ def _review_id(
             "review_version": review_version,
             "memory_revision_id": memory_revision_id,
             "disposition": disposition.value,
-            "reason": reason,
+            "risk_class": risk_class.value,
+            "assessment_id": assessment_id,
+            "evidence_ids": list(evidence_ids),
             "parent_review_id": parent_review_id,
         },
         sort_keys=True,
@@ -134,7 +152,9 @@ class AssociationReviewRegistry:
                 review_version=record.review_version,
                 memory_revision_id=record.memory_revision_id,
                 disposition=record.disposition,
-                reason=record.reason,
+                risk_class=record.risk_class,
+                assessment_id=record.assessment_id,
+                evidence_ids=record.evidence_ids,
                 parent_review_id=record.parent_review_id,
             )
             if record.review_id != expected_id:
@@ -176,13 +196,25 @@ class AssociationReviewRegistry:
         *,
         association_id: str,
         memory_revision_id: str,
-        reason: str,
+        assessment: ReviewEvidenceAssessment,
     ) -> "AssociationReviewRegistry":
+        self._validate_assessment_binding(
+            association_id=association_id,
+            memory_revision_id=memory_revision_id,
+            assessment=assessment,
+        )
+        if assessment.risk_class not in {
+            ReviewRiskClass.SUSPECTED_OVERGENERALIZATION,
+            ReviewRiskClass.CONTRADICTED,
+        }:
+            raise ReviewAssessmentInsufficient(
+                "quarantine requires contradictory counterexample or holdout evidence"
+            )
         return self._append(
             association_id=association_id,
             memory_revision_id=memory_revision_id,
             disposition=ReviewDisposition.QUARANTINED,
-            reason=reason,
+            assessment=assessment,
         )
 
     def release(
@@ -190,14 +222,42 @@ class AssociationReviewRegistry:
         *,
         association_id: str,
         memory_revision_id: str,
-        reason: str,
+        assessment: ReviewEvidenceAssessment,
     ) -> "AssociationReviewRegistry":
+        self._validate_assessment_binding(
+            association_id=association_id,
+            memory_revision_id=memory_revision_id,
+            assessment=assessment,
+        )
+        if (
+            assessment.risk_class is not ReviewRiskClass.CLEAR
+            or not assessment.supporting_holdout_ids
+            or assessment.contradicting_evidence_ids
+        ):
+            raise ReviewAssessmentInsufficient(
+                "release requires current clear holdout support and no contradictions"
+            )
         return self._append(
             association_id=association_id,
             memory_revision_id=memory_revision_id,
             disposition=ReviewDisposition.ACTIVE,
-            reason=reason,
+            assessment=assessment,
         )
+
+    @staticmethod
+    def _validate_assessment_binding(
+        *,
+        association_id: str,
+        memory_revision_id: str,
+        assessment: ReviewEvidenceAssessment,
+    ) -> None:
+        if (
+            assessment.association_id != association_id
+            or assessment.memory_revision_id != memory_revision_id
+        ):
+            raise ReviewAssessmentMismatch(
+                "review assessment does not bind the exact association revision"
+            )
 
     def _append(
         self,
@@ -205,23 +265,17 @@ class AssociationReviewRegistry:
         association_id: str,
         memory_revision_id: str,
         disposition: ReviewDisposition,
-        reason: str,
+        assessment: ReviewEvidenceAssessment,
     ) -> "AssociationReviewRegistry":
-        if not association_id.strip():
-            raise ValueError("association_id must be non-empty")
-        if not memory_revision_id.strip():
-            raise ValueError("memory_revision_id must be non-empty")
-        if not reason.strip():
-            raise ValueError("reason must be non-empty")
-
         prior = self.current(association_id)
         if (
             prior is not None
             and prior.memory_revision_id == memory_revision_id
             and prior.disposition is disposition
+            and prior.assessment_id == assessment.assessment_id
         ):
             raise ReviewNoOpError(
-                "review state already matches this exact memory revision"
+                "review state already reflects this exact evidence assessment"
             )
 
         review_version = 1 if prior is None else prior.review_version + 1
@@ -231,7 +285,9 @@ class AssociationReviewRegistry:
             review_version=review_version,
             memory_revision_id=memory_revision_id,
             disposition=disposition,
-            reason=reason,
+            risk_class=assessment.risk_class,
+            assessment_id=assessment.assessment_id,
+            evidence_ids=assessment.evidence_ids,
             parent_review_id=parent_review_id,
         )
         record = AssociationReviewRecord(
@@ -239,7 +295,9 @@ class AssociationReviewRegistry:
             review_version=review_version,
             memory_revision_id=memory_revision_id,
             disposition=disposition,
-            reason=reason,
+            risk_class=assessment.risk_class,
+            assessment_id=assessment.assessment_id,
+            evidence_ids=assessment.evidence_ids,
             parent_review_id=parent_review_id,
             review_id=review_id,
             _token=_REVIEW_RECORD_TOKEN,

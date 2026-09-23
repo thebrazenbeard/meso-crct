@@ -15,6 +15,7 @@ import math
 
 from .plasticity import PlasticityCandidate
 from .review import AssociationReviewRegistry
+from .review_evidence import ReviewEvidenceAssessment
 
 
 def _signed_unit(value: float, *, name: str) -> float:
@@ -325,16 +326,16 @@ def quarantine_association(
     memory: AssociationMemory,
     association_id: str,
     *,
-    reason: str,
+    assessment: ReviewEvidenceAssessment,
 ) -> AssociationMemory:
-    """Quarantine the exact current association revision without deleting it."""
+    """Quarantine the exact current revision from evidence assessment."""
     current = memory.current(association_id)
     if current is None:
         raise AssociationNotFound(association_id)
     reviews = memory.reviews.quarantine(
         association_id=association_id,
         memory_revision_id=current.revision_id,
-        reason=reason,
+        assessment=assessment,
     )
     return AssociationMemory(
         revisions=memory.revisions,
@@ -346,16 +347,16 @@ def release_association(
     memory: AssociationMemory,
     association_id: str,
     *,
-    reason: str,
+    assessment: ReviewEvidenceAssessment,
 ) -> AssociationMemory:
-    """Admit the exact current association revision after review."""
+    """Admit the exact current revision only from clear review evidence."""
     current = memory.current(association_id)
     if current is None:
         raise AssociationNotFound(association_id)
     reviews = memory.reviews.release(
         association_id=association_id,
         memory_revision_id=current.revision_id,
-        reason=reason,
+        assessment=assessment,
     )
     return AssociationMemory(
         revisions=memory.revisions,

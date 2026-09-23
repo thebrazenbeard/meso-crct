@@ -16,6 +16,8 @@ from meso_crct import (
     Provenance,
     ProvenanceVerifier,
     AssociationQuarantinedError,
+    ReviewEvidenceKind,
+    ReviewEvidenceOutcome,
     RecallMemoryMismatch,
     RecallReplayError,
     RecallStateMismatch,
@@ -29,6 +31,8 @@ from meso_crct import (
     build_target_appraisal,
     evaluate_transition,
     propose_plasticity,
+    assess_review_evidence,
+    bind_review_evidence,
     quarantine_association,
     recall_association,
     release_association,
@@ -96,6 +100,30 @@ def recall_for_current_appraisal(
     )
     return memory, influence
 
+
+
+def review_assessment(memory, association_id, *, outcome, ref):
+    revision = memory.current(association_id)
+    assert revision is not None
+    state = CircuitState(
+        salience=SalienceState(semantic_relevance=0.5),
+    )
+    _, event = EventSequencer(ref).issue()
+    receipt = evaluate_transition(
+        before=CircuitState(),
+        after=state,
+        provenance=verified(ref),
+        event=event,
+    )
+    item = bind_review_evidence(
+        association_id=association_id,
+        memory_revision_id=revision.revision_id,
+        kind=ReviewEvidenceKind.HOLDOUT,
+        outcome=outcome,
+        evidence_ref=ref,
+        receipt=receipt,
+    )
+    return assess_review_evidence([item])
 
 def cue_appraisal(target_id="cue-target"):
     return build_target_appraisal(
@@ -338,7 +366,12 @@ def test_precomputed_recall_is_blocked_if_memory_is_quarantined_afterward():
     quarantined = quarantine_association(
         memory,
         "quarantine-after",
-        reason="negative-transfer concern",
+        assessment=review_assessment(
+            memory,
+            "quarantine-after",
+            outcome=ReviewEvidenceOutcome.CONTRADICTS,
+            ref="negative-transfer-concern",
+        ),
     )
 
     with pytest.raises(AssociationQuarantinedError):
@@ -367,12 +400,22 @@ def test_old_precomputed_recall_is_stale_after_review_state_changes():
     memory = quarantine_association(
         memory,
         "review-change",
-        reason="hold",
+        assessment=review_assessment(
+            memory,
+            "review-change",
+            outcome=ReviewEvidenceOutcome.CONTRADICTS,
+            ref="review-change-hold",
+        ),
     )
     memory = release_association(
         memory,
         "review-change",
-        reason="cleared",
+        assessment=review_assessment(
+            memory,
+            "review-change",
+            outcome=ReviewEvidenceOutcome.SUPPORTS,
+            ref="review-change-clear",
+        ),
     )
 
     with pytest.raises(RecallMemoryMismatch):

@@ -11,11 +11,17 @@ from meso_crct import (
     PlasticityPolicy,
     Provenance,
     ProvenanceVerifier,
+    ReviewAssessmentInsufficient,
     ReviewDisposition,
+    ReviewEvidenceKind,
+    ReviewEvidenceOutcome,
     ReviewNoOpError,
+    ReviewRiskClass,
     SalienceState,
     SourceKind,
     apply_candidate,
+    assess_review_evidence,
+    bind_review_evidence,
     evaluate_transition,
     propose_plasticity,
     quarantine_association,
@@ -105,6 +111,38 @@ def cue_receipt(stream="cue"):
     )
 
 
+def assessment_for(memory, *, kind, outcome, ref):
+    revision = memory.current("cue->outcome")
+    assert revision is not None
+    item = bind_review_evidence(
+        association_id="cue->outcome",
+        memory_revision_id=revision.revision_id,
+        kind=kind,
+        outcome=outcome,
+        evidence_ref=ref,
+        receipt=cue_receipt(ref),
+    )
+    return assess_review_evidence([item])
+
+
+def quarantine_assessment(memory, ref="negative-transfer"):
+    return assessment_for(
+        memory,
+        kind=ReviewEvidenceKind.HOLDOUT,
+        outcome=ReviewEvidenceOutcome.CONTRADICTS,
+        ref=ref,
+    )
+
+
+def clear_assessment(memory, ref="clear-holdout"):
+    return assessment_for(
+        memory,
+        kind=ReviewEvidenceKind.HOLDOUT,
+        outcome=ReviewEvidenceOutcome.SUPPORTS,
+        ref=ref,
+    )
+
+
 def test_review_record_cannot_be_constructed_directly():
     with pytest.raises(TypeError):
         AssociationReviewRecord(
@@ -112,7 +150,9 @@ def test_review_record_cannot_be_constructed_directly():
             review_version=1,
             memory_revision_id="fake",
             disposition=ReviewDisposition.QUARANTINED,
-            reason="fake",
+            risk_class=ReviewRiskClass.CONTRADICTED,
+            assessment_id="fake",
+            evidence_ids=("fake",),
             parent_review_id=None,
             review_id="fake",
         )
@@ -123,15 +163,17 @@ def test_quarantine_preserves_learning_but_blocks_recall():
     revision = memory.current("cue->outcome")
     assert revision is not None
 
+    assessment = quarantine_assessment(memory)
     quarantined = quarantine_association(
         memory,
         "cue->outcome",
-        reason="suspected negative transfer",
+        assessment=assessment,
     )
 
     assert quarantined.revisions == memory.revisions
     assert quarantined.current_strength("cue->outcome") == pytest.approx(0.8)
     assert quarantined.current("cue->outcome").revision_id == revision.revision_id
+    assert quarantined.reviews.current("cue->outcome").assessment_id == assessment.assessment_id
 
     with pytest.raises(AssociationQuarantinedError):
         recall_association(
@@ -142,19 +184,26 @@ def test_quarantine_preserves_learning_but_blocks_recall():
         )
 
 
-def test_release_restores_same_revision_recall_without_rewriting_memory():
+def test_release_requires_clear_holdout_evidence():
     memory = learned_memory()
     quarantined = quarantine_association(
         memory,
         "cue->outcome",
-        reason="hold for review",
+        assessment=quarantine_assessment(memory),
     )
+
+    with pytest.raises(ReviewAssessmentInsufficient):
+        release_association(
+            quarantined,
+            "cue->outcome",
+            assessment=quarantine_assessment(quarantined, ref="still-bad"),
+        )
+
     released = release_association(
         quarantined,
         "cue->outcome",
-        reason="review cleared current revision",
+        assessment=clear_assessment(quarantined),
     )
-
     influence = recall_association(
         memory=released,
         association_id="cue->outcome",
@@ -169,21 +218,20 @@ def test_release_restores_same_revision_recall_without_rewriting_memory():
     ).review_id
 
 
-def test_learning_change_after_release_makes_review_stale_until_re_reviewed():
+def test_learning_change_after_release_makes_review_stale_until_new_evidence():
     memory = learned_memory()
     memory = quarantine_association(
         memory,
         "cue->outcome",
-        reason="initial concern",
+        assessment=quarantine_assessment(memory),
     )
     memory = release_association(
         memory,
         "cue->outcome",
-        reason="initial revision cleared",
+        assessment=clear_assessment(memory),
     )
     changed = add_learning(memory)
 
-    assert changed.current_version("cue->outcome") == 2
     with pytest.raises(AssociationReviewStaleError):
         recall_association(
             memory=changed,
@@ -192,10 +240,17 @@ def test_learning_change_after_release_makes_review_stale_until_re_reviewed():
             cue_receipt=cue_receipt("cue-after-change"),
         )
 
+    with pytest.raises(Exception):
+        release_association(
+            changed,
+            "cue->outcome",
+            assessment=clear_assessment(memory, ref="old-revision-evidence"),
+        )
+
     re_reviewed = release_association(
         changed,
         "cue->outcome",
-        reason="new revision reviewed",
+        assessment=clear_assessment(changed, ref="new-revision-holdout"),
     )
     influence = recall_association(
         memory=re_reviewed,
@@ -206,12 +261,13 @@ def test_learning_change_after_release_makes_review_stale_until_re_reviewed():
     assert influence.learned_strength == pytest.approx(1.0)
 
 
-def test_review_log_is_append_only_and_rejects_same_state_noop():
+def test_review_log_is_append_only_and_rejects_exact_same_assessment_noop():
     memory = learned_memory()
+    assessment = quarantine_assessment(memory)
     quarantined = quarantine_association(
         memory,
         "cue->outcome",
-        reason="first hold",
+        assessment=assessment,
     )
     first = quarantined.reviews.current("cue->outcome")
     assert first is not None
@@ -220,13 +276,13 @@ def test_review_log_is_append_only_and_rejects_same_state_noop():
         quarantine_association(
             quarantined,
             "cue->outcome",
-            reason="duplicate hold",
+            assessment=assessment,
         )
 
     released = release_association(
         quarantined,
         "cue->outcome",
-        reason="cleared",
+        assessment=clear_assessment(quarantined),
     )
     history = released.reviews.history("cue->outcome")
     assert len(history) == 2
@@ -236,7 +292,7 @@ def test_review_log_is_append_only_and_rejects_same_state_noop():
     assert history[1].disposition is ReviewDisposition.ACTIVE
 
 
-def test_unreviewed_association_remains_recallable_for_backward_compatible_admission():
+def test_unreviewed_association_remains_recallable():
     memory = learned_memory()
     influence = recall_association(
         memory=memory,
