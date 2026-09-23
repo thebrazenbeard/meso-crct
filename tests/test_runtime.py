@@ -97,6 +97,20 @@ def test_direct_register_write_cannot_become_accepted_source():
         ProvenanceVerifier([claim], verifier_id="runtime-root-v1")
 
 
+
+
+def test_verified_provenance_cannot_be_constructed_directly():
+    from meso_crct import VerifiedProvenance
+
+    claim = Provenance(
+        source_kind=SourceKind.ENVIRONMENT,
+        source_id="sensor/front-camera",
+        source_revision="v1",
+    )
+    with pytest.raises(TypeError):
+        VerifiedProvenance(claim=claim, verifier_id="pretend-verifier")
+
+
 def test_unregistered_source_relabel_fails_verification():
     accepted = Provenance(
         source_kind=SourceKind.ENVIRONMENT,
