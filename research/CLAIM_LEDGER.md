@@ -59,4 +59,8 @@ States used here:
 | C-047 | An appraised target may be caller-constructed while still claiming canonical appraisal provenance. | REJECTED_AS_COLLAPSE | constructor-gated AppraisedTarget |
 | C-048 | A canonical appraised experience can bind source provenance, distinct event identity, transition receipt, optional plasticity, and versioned association memory in one reference transaction. | TESTED_LOCAL | numeric learning transaction only |
 | C-049 | Maximum pleasure with zero teaching signal can create a durable learned preference through the experience transaction. | REJECTED_AS_COLLAPSE | durable memory remains unchanged |
-| C-050 | Current target priority determines action direction. | UNRESOLVED | priority/selection implemented; directional action tendency remains next frontier |
+| C-050 | Current target priority determines action direction. | REJECTED_AS_COLLAPSE | priority and direction are separately derived |
+| C-051 | Negative learned recall can produce learned withdrawal without writing current hazard or pleasure. | TESTED_LOCAL | reference action-tendency layer |
+| C-052 | Positive incentive salience can provide approach direction while generic motivational salience remains directionally uncommitted. | TESTED_LOCAL | typed directional semantics |
+| C-053 | Epistemic/orienting priority can produce inspect tendency rather than approach. | TESTED_LOCAL | reference action-tendency semantics |
+| C-054 | The end-to-end reference loop can learn a signed association, recall it on a later cue, select the target, and derive opposite action directions at equal selection priority. | TESTED_LOCAL | deterministic integration scenario only |
