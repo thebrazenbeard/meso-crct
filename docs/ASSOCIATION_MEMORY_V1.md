@@ -26,11 +26,11 @@ silently overwriting newer learning.
 
 ## Replay protection
 
-A verified transition receipt may contribute at most one applied persistent
-update in a memory snapshot.
+For a given association, a verified transition receipt may contribute at most
+one applied persistent update in a memory snapshot.
 
-This prevents the same event from being replayed repeatedly to manufacture
-learning strength.
+This prevents replaying the same event against the same association while still
+allowing one event to legitimately update more than one distinct association.
 
 ## Reversal
 
