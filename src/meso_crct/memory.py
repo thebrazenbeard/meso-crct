@@ -90,9 +90,14 @@ class AssociationMemory:
         current = self.current(association_id)
         return 0 if current is None else current.version
 
-    def receipt_used(self, transition_receipt_id: str) -> bool:
+    def receipt_used(
+        self,
+        transition_receipt_id: str,
+        association_id: str,
+    ) -> bool:
         return any(
             revision.transition_receipt_id == transition_receipt_id
+            and revision.association_id == association_id
             and revision.operation == "apply"
             for revision in self.revisions
         )
@@ -148,7 +153,10 @@ def apply_candidate(
             f"expected version {expected_version}, current version {current_version}"
         )
 
-    if memory.receipt_used(candidate.transition_receipt_id):
+    if memory.receipt_used(
+        candidate.transition_receipt_id,
+        candidate.association_id,
+    ):
         raise PlasticityReplayError(
             "transition receipt already used for a persistent association update"
         )
