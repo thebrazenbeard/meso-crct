@@ -145,6 +145,7 @@ from .review_evidence import (
     assess_review_evidence,
     bind_review_evidence,
 )
+from .recruitment import RecruitmentPolicy, RecruitmentTransition, advance_recruitment
 from .runtime import (
     RuntimeFrame,
     RuntimePhase,
@@ -185,6 +186,9 @@ __all__ = [
     "SalienceState",
     "LearningState",
     "RecruitmentState",
+    "RecruitmentPolicy",
+    "RecruitmentTransition",
+    "advance_recruitment",
     "CircuitState",
     "ControlPolicy",
     "ControlState",
