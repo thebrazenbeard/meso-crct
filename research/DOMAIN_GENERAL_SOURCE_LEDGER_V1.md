@@ -590,3 +590,53 @@ They cannot by themselves establish:
   - distinguishes resource conflict from other/inherent goal conflict and highlights heterogeneity of goal-conflict constructs.
 - architecture use:
   - do not collapse all multi-goal conflict into one competition scalar.
+
+
+## Criteria interaction / non-compensatory aggregation
+
+### DG-M-008 — Greco, Słowiński & Wallenius (2025)
+- title: *Fifty years of multiple criteria decision analysis: From classical methods to robust ordinal regression*
+- journal: European Journal of Operational Research 323(2):351–377
+- DOI: `10.1016/j.ejor.2024.07.038`
+- contribution:
+  - reviews major MCDA schools, preference elicitation, criteria aggregation and recommendation development over five decades.
+- architecture use:
+  - confirms that aggregation method and preference model are policy choices rather than neutral consequences of having several numeric criteria.
+
+### DG-M-009 — Figueira, Greco & Roy (2009)
+- title: *ELECTRE methods with interaction between criteria: An extension of the concordance index*
+- journal: European Journal of Operational Research 199(2):478–495
+- DOI: `10.1016/j.ejor.2008.11.025`
+- contribution:
+  - explicitly models mutual strengthening, mutual weakening and antagonistic interactions between criteria;
+  - demonstrates that interacting criteria require declared interaction semantics.
+- architecture use:
+  - supports the anti-dimension-stuffing rule that differently named contributions cannot be presumed independent/additive.
+
+### DG-M-010 — Ishii & Sugeno / Choquet survey lineage (2015 survey)
+- title: *A Short Survey on the Usage of Choquet Integral and its Associated Fuzzy Measure in Multiple Attribute Analysis*
+- journal: Procedia Computer Science 59:427–434
+- DOI: `10.1016/j.procs.2015.07.560`
+- contribution:
+  - reviews Choquet-based aggregation specifically because ordinary additive aggregation cannot naturally represent criterion interactions;
+  - notes the parameter-identification complexity that grows with the number of attributes.
+- architecture use:
+  - Choquet is a useful reference for redundancy/synergy, but its parameter complexity argues against making it MESO's default core aggregator.
+
+### DG-M-011 — Marichal (2004)
+- title: *Tolerant or intolerant character of interacting criteria in aggregation by the Choquet integral*
+- journal: European Journal of Operational Research 155(3):771–791
+- DOI: `10.1016/S0377-2217(02)00885-8`
+- contribution:
+  - treats statistical correlation/redundancy, substitutability/complementarity and decisive criteria as distinct interaction patterns.
+- architecture use:
+  - supports separating evidence redundancy from genuinely distinct motivational reasons.
+
+### DG-M-012 — ELECTRE / outranking review lineage
+- reference: Govindan & Jepsen (2016), *ELECTRE: A comprehensive literature review on methodologies and applications*
+- journal: European Journal of Operational Research 250(1):1–29
+- DOI: `10.1016/j.ejor.2015.07.019`
+- contribution:
+  - reviews a large ELECTRE literature built around outranking rather than a single compensatory utility score.
+- architecture use:
+  - supports researching partial/incomplete ordering and non-compensatory vetoes as alternatives to universal scalarization.
