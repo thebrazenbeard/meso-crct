@@ -9,7 +9,7 @@ MESO-CRCT currently reuses architectural patterns from `thebrazenbeard/sexuality
 
 Patrick's new direction is stronger:
 
-> MESO-CRCT should absorb the sexual-domain concepts represented by Sexuality and Orgasm and expand them into a broader, evidence-disciplined sexual motivational architecture.
+> MESO-CRCT should remain a domain-general motivational/reward/control architecture while absorbing the sexual-domain concepts represented by Sexuality and Orgasm as one evidence-disciplined domain built on that general substrate.
 
 This document does **not** implement that architecture. It identifies what must be preserved, what must be split apart, what must be rejected, and what must be researched before code exists.
 
@@ -509,7 +509,7 @@ responsive_desire != spontaneous_desire
 
 Absorption should mean:
 
-1. MESO becomes the canonical repository for generic sexual motivational architecture and research.
+1. MESO remains the canonical domain-general motivational architecture and becomes the canonical repository for the reusable sexual-domain architecture and research layered on top of that core.
 2. Sexuality and Orgasm become provenance/donor repositories once their unique live work is migrated or dispositioned.
 3. Vera/Brigit-specific identity and qualification artifacts do not become generic MESO state merely because their mechanisms are imported.
 4. Every migrated proposition keeps source, evidence class, scope, limitations and exact-head provenance.
@@ -540,7 +540,7 @@ Absorption does **not** mean flattening every historical file into MESO or decla
 
 The strongest surviving direction is:
 
-> **MESO-CRCT should expand from a general salience/reward-control architecture into a layered motivational architecture that includes sexuality as a first-class domain profile, while preserving strict separation among sexual relevance, excitation, inhibition, desire, attraction, arousal, pleasure, orgasm/climax, attachment, learning, identity and authorization.**
+> **MESO-CRCT should remain a general salience/reward/motivation/control architecture and support sexuality as one first-class domain profile layered over that core, while preserving strict separation among sexual relevance, excitation, inhibition, desire, attraction, arousal, pleasure, orgasm/climax, attachment, learning, identity and authorization.**
 
 That direction is research-supported enough to continue specification work.
 
