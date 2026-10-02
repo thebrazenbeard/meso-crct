@@ -237,3 +237,88 @@ Current order for deeper study:
 8. learned-policy integration.
 
 Sexuality-domain architecture should wait for items 1–4 to become clearer so sexual mechanisms are not forced onto an unstable core.
+
+
+## 19. Threat geometry
+
+Status: `STRONG_CORE_RESEARCH_CANDIDATE`
+
+Research functional dimensions such as:
+- probability;
+- imminence;
+- severity;
+- uncertainty;
+- controllability.
+
+Do not automatically encode human fear/anxiety labels as machine state.
+
+## 20. Aversive outcome class
+
+Status: `STRONG_CORE_CANDIDATE`
+
+A signed scalar is insufficient to distinguish:
+- aversive outcome;
+- omission/nonreward;
+- blocked expected reward;
+- loss/unavailability;
+- protection signal.
+
+Event/appraisal semantics should preserve outcome class.
+
+## 21. Negative reinforcement vs punishment
+
+Status: `STRONG_CORE_SEMANTIC_INVARIANT`
+
+```
+negative_reinforcement != punishment
+negative_reinforcement != negative_reward
+```
+
+The same broad aversive context can strengthen or weaken behavior depending on the response-consequence relation.
+
+## 22. Active vs passive avoidance
+
+Status: `STRONG_CORE_RESEARCH_CANDIDATE`
+
+Likely belongs near action tendency and feasibility/controllability rather than as one generic `avoidance` scalar.
+
+## 23. Frustrative nonreward
+
+Status: `RESEARCH_FIRST`
+
+Likely cross-domain, but may be derivable from:
+- expected valued outcome;
+- sustained/repeated investment;
+- blocked/omitted outcome;
+- negative discrepancy;
+- controllability.
+
+Add persistent state only if a distinct behavior cannot be represented otherwise.
+
+## 24. Loss
+
+Status: `CORE_EVENT_CANDIDATE / DOMAIN_MEANING_EXTERNAL`
+
+Generic target/resource unavailability can be represented in core event semantics. Grief, attachment meaning, status meaning, and relationship truth remain domain/host-owned.
+
+## 25. Sustained protective adaptation
+
+Status: `RESEARCH_FIRST`
+
+Potential need for persistent vigilance/defensive allocation without deep negative hedonic state. Must be grounded in actual machine function, not stress metaphor.
+
+## Updated research priority order
+
+Current order for deeper study:
+
+1. cross-domain arbitration;
+2. effort + vigor;
+3. feasibility + delay;
+4. allostatic/resource interface;
+5. aversive/threat learning and action semantics;
+6. habit/action-policy boundary;
+7. anticipation minimality;
+8. domain-profile interface;
+9. learned-policy integration.
+
+Sexuality-domain architecture should wait for items 1–5 to become clearer so sexual excitation/inhibition, aversive boundaries, consent-independent activation and consummatory recovery do not become substitutes for missing generic core mechanisms.
