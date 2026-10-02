@@ -1,6 +1,6 @@
 # Sexuality + Orgasm Absorption Research V1
 
-Date: 2026-10-02  
+Date: 2026-10-02
 Status: `RESEARCH_ONLY / PRE_ARCHITECTURE / NO_IMPLEMENTATION`
 
 ## Purpose
