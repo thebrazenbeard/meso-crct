@@ -358,3 +358,63 @@ They cannot by themselves establish:
   - dopamine is important for energizing behavior but not a sufficient single-transmitter explanation.
 - architecture use:
   - reinforces functional effort/vigor types rather than dopamine imitation.
+
+
+## Negative valence / aversive motivation
+
+### DG-E-026 — NIMH RDoC Negative Valence Systems
+- current constructs:
+  - Acute Threat ("Fear")
+  - Potential Threat ("Anxiety")
+  - Sustained Threat
+  - Loss
+  - Frustrative Nonreward
+- contribution:
+  - provides explicit counterexamples to a single generic negative-value construct;
+  - distinguishes immediate danger, uncertain/distant harm, persistent threat adaptation, deprivation/loss, and blocked expected reward.
+- architecture use:
+  - functional differentiation only; MESO need not copy human emotion labels.
+
+### DG-E-027 — Papini et al. (2024)
+- title: *Frustrative Nonreward: Behavior, Circuits, Neurochemistry, and Disorders*
+- journal: Journal of Neuroscience 44(40):e1021242024
+- DOI: `10.1523/JNEUROSCI.1021-24.2024`
+- contribution:
+  - frustrative nonreward depends on surprising omission/reduction of an expected valued resource;
+  - distinguishes plain nonreward from expectation-violating blocked reward;
+  - links FNR to later motivational, learning and social consequences.
+- architecture use:
+  - test whether MESO needs a distinct blocked-expected-reward control state beyond numeric prediction error.
+
+### DG-E-028 — Yee et al. (2022)
+- title: *Aversive motivation and cognitive control*
+- journal: Neuroscience & Biobehavioral Reviews 133:104493
+- DOI: `10.1016/j.neubiorev.2021.12.016`
+- contribution:
+  - negative reinforcement and punishment have distinct behavioral/computational roles;
+  - aversive incentives can either activate or inhibit behavior depending on context;
+  - mixed appetitive/aversive motivation is important for control allocation.
+- architecture use:
+  - prohibit `aversive == suppress behavior`;
+  - preserve outcome valence separately from learning-direction semantics.
+
+### DG-E-029 — Bravo-Rivera / aversive behavior review lineage (2022)
+- title: *Neural systems for aversively motivated behavior*
+- series: Advances in Motivation Science 9:33–55
+- DOI: `10.1016/bs.adms.2022.01.002`
+- contribution:
+  - active and passive avoidance differ in neural, motivational and affective consequences;
+  - perceived controllability changes avoidance strategy.
+- architecture use:
+  - motivates active/preventive vs inhibitory avoidance research and links it to feasibility/controllability.
+
+### DG-E-030 — Sands et al. (2023)
+- title: *Subsecond fluctuations in extracellular dopamine encode reward and punishment prediction errors in humans*
+- journal: Science Advances 9(48):eadi4927
+- DOI: `10.1126/sciadv.adi4927`
+- contribution:
+  - intracranial human data found reward and punishment prediction errors with distinct valence-specific temporal dynamics.
+- architecture use:
+  - preserve outcome/teaching-signal class rather than assuming one unsigned or sign-only dopamine analogue.
+- ceiling:
+  - small neurosurgical human sample; does not define a machine learning rule.
