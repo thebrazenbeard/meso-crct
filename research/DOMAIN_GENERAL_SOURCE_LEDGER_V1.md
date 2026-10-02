@@ -480,3 +480,27 @@ They cannot by themselves establish:
   - reviews dynamic, context-dependent willingness to exert effort across motivational domains.
 - architecture use:
   - treat effort appraisal as current-state/candidate dependent, not one stable motivation trait.
+
+
+## Future goal / feasibility / temporal-cost refinement
+
+### DG-E-037 — Johnson & Grabenhorst (2025; volume 2024)
+- title: *The amygdala and the pursuit of future rewards*
+- journal: Frontiers in Neuroscience 18:1517231
+- DOI: `10.3389/fnins.2024.1517231`
+- contribution:
+  - reviews goal formation and stepwise pursuit of future rewards;
+  - separates subjective reward value from effort and delay costs;
+  - discusses expectancy/value, dynamic inconsistency and progress tracking.
+- architecture use:
+  - preserve target value, delay, effort and feasibility as distinct appraisal inputs;
+  - do not treat changing current choice as automatic permanent-preference mutation.
+
+### DG-E-038 — acute stress / delay-discounting meta-analysis (2024)
+- title: *No effects of acute stress on monetary delay discounting: A systematic literature review and meta-analysis*
+- journal: Neurobiology of Stress 31:100653
+- DOI: `10.1016/j.ynstr.2024.100653`
+- contribution:
+  - demonstrates that seemingly intuitive context effects on delay discounting do not necessarily survive aggregate evidence.
+- architecture use:
+  - warning against hard-coding folk assumptions about stress automatically making agents short-sighted.
