@@ -17,8 +17,11 @@ from .allocation_attested import (
     audit_attested_attention_budget,
 )
 from .allocation_guard import (
+    AllocationAuditModeMismatch,
+    AllocationAuditObligationMismatch,
     AllocationGuardResult,
     GoalRelationGuardMode,
+    UnattestedAllocationAudit,
     select_with_allocation_guard,
 )
 from .appraisal import (
@@ -388,8 +391,11 @@ __all__ = [
     "audit_attested_attention_budget",
     "audit_attention_budget",
     "audit_allocation_window",
+    "AllocationAuditModeMismatch",
+    "AllocationAuditObligationMismatch",
     "AllocationGuardResult",
     "GoalRelationGuardMode",
+    "UnattestedAllocationAudit",
     "select_with_allocation_guard",
     "SourceKind",
     "Provenance",

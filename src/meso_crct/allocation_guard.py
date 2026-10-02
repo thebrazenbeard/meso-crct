@@ -1,4 +1,4 @@
-"""Governed response to long-horizon allocation pathology.
+﻿"""Governed response to long-horizon allocation pathology.
 
 The guard can temporarily redirect one non-protective selection toward a
 neglected goal that is currently non-quiescent. It never overrides a protective
@@ -12,14 +12,31 @@ from enum import Enum
 from typing import Iterable
 
 from .allocation import AllocationAudit, GoalObligation
+from .allocation_attested import (
+    AttestedAllocationAuditReceipt,
+    UnadmittedAllocationObligation,
+)
 from .arbitration import ArbitrationMode
 from .goals import GoalRelationAdmissionReceipt
+from .obligations import AdmittedGoalObligation
 from .selection import (
     SelectionPolicy,
     SelectionResult,
     TargetState,
     select_target,
 )
+
+
+class UnattestedAllocationAudit(ValueError):
+    pass
+
+
+class AllocationAuditObligationMismatch(ValueError):
+    pass
+
+
+class AllocationAuditModeMismatch(ValueError):
+    pass
 
 
 class GoalRelationGuardMode(str, Enum):
@@ -38,6 +55,7 @@ class AllocationGuardResult:
     goal_relation_mode: GoalRelationGuardMode = (
         GoalRelationGuardMode.LEGACY_TARGET_IDENTITY
     )
+    allocation_audit_input_digest: str | None = None
 
 
 def _ordinary_mode(mode: ArbitrationMode) -> bool:
@@ -48,10 +66,60 @@ def _ordinary_mode(mode: ArbitrationMode) -> bool:
     }
 
 
+def _qualified_audit_inputs(
+    audit: AllocationAudit | AttestedAllocationAuditReceipt,
+    obligations: tuple[GoalObligation, ...],
+) -> tuple[AllocationAudit, tuple[GoalObligation, ...], str]:
+    if not isinstance(audit, AttestedAllocationAuditReceipt):
+        raise UnattestedAllocationAudit(
+            "qualified allocation guard requires AttestedAllocationAuditReceipt"
+        )
+
+    admitted: list[AdmittedGoalObligation] = []
+    for obligation in obligations:
+        if not isinstance(obligation, AdmittedGoalObligation):
+            raise UnadmittedAllocationObligation(
+                "qualified allocation guard requires admitted goal obligations"
+            )
+        admitted.append(obligation)
+
+    ordered = tuple(
+        sorted(
+            admitted,
+            key=lambda obligation: (
+                obligation.goal_id,
+                obligation.admission_input_digest,
+            ),
+        )
+    )
+    supplied_digests = tuple(
+        obligation.admission_input_digest for obligation in ordered
+    )
+    if supplied_digests != audit.obligation_admission_digests:
+        raise AllocationAuditObligationMismatch(
+            "guard obligations do not match the strict allocation audit receipt"
+        )
+
+    return audit.audit, tuple(ordered), audit.audit_input_digest
+
+
+def _legacy_audit_inputs(
+    audit: AllocationAudit | AttestedAllocationAuditReceipt,
+    obligations: tuple[GoalObligation, ...],
+) -> tuple[AllocationAudit, tuple[GoalObligation, ...], None]:
+    if isinstance(audit, AttestedAllocationAuditReceipt):
+        raise AllocationAuditModeMismatch(
+            "legacy allocation guard cannot reinterpret an attested audit receipt"
+        )
+    if not isinstance(audit, AllocationAudit):
+        raise TypeError("legacy allocation guard requires AllocationAudit")
+    return audit, obligations, None
+
+
 def select_with_allocation_guard(
     targets: tuple[TargetState, ...] | list[TargetState],
     *,
-    audit: AllocationAudit,
+    audit: AllocationAudit | AttestedAllocationAuditReceipt,
     obligations: Iterable[GoalObligation],
     policy: SelectionPolicy | None = None,
     goal_relation_receipts: Iterable[GoalRelationAdmissionReceipt] = (),
@@ -59,13 +127,14 @@ def select_with_allocation_guard(
 ) -> AllocationGuardResult:
     """Apply one explicit rebalancing opportunity after ordinary selection.
 
-    Qualified receipt mode uses only admitted goal->target mappings.
-    By default nonempty receipts select qualified mode; an explicit mode may
-    require qualified semantics even with no mappings. With no receipts and no
-    explicit mode, V2 goal_id == target_id behavior remains as compatibility.
+    Qualified receipt mode requires an attested historical allocation audit,
+    admitted obligations certified by that exact audit, and admitted current
+    goal->target mappings. Legacy mode preserves the V2 identity behavior.
     """
     targets = tuple(targets)
     receipts = tuple(goal_relation_receipts)
+    obligations = tuple(obligations)
+
     if goal_relation_mode is None:
         resolved_relation_mode = (
             GoalRelationGuardMode.QUALIFIED_RECEIPTS
@@ -85,8 +154,18 @@ def select_with_allocation_guard(
             "legacy goal-target identity mode cannot accept relation receipts"
         )
 
-    target_ids = {target.target_id for target in targets}
+    if resolved_relation_mode is GoalRelationGuardMode.QUALIFIED_RECEIPTS:
+        audit_state, obligations, audit_digest = _qualified_audit_inputs(
+            audit,
+            obligations,
+        )
+    else:
+        audit_state, obligations, audit_digest = _legacy_audit_inputs(
+            audit,
+            obligations,
+        )
 
+    target_ids = {target.target_id for target in targets}
     for receipt in receipts:
         if receipt.relation.target_id not in target_ids:
             raise ValueError(
@@ -104,9 +183,10 @@ def select_with_allocation_guard(
             rebalanced_goal_id=None,
             rebalanced_goal_relation_receipts=(),
             goal_relation_mode=resolved_relation_mode,
+            allocation_audit_input_digest=audit_digest,
         )
 
-    if "goal_neglect" not in audit.flags:
+    if "goal_neglect" not in audit_state.flags:
         return AllocationGuardResult(
             base_selection=base,
             final_selection=base,
@@ -115,12 +195,13 @@ def select_with_allocation_guard(
             rebalanced_goal_id=None,
             rebalanced_goal_relation_receipts=(),
             goal_relation_mode=resolved_relation_mode,
+            allocation_audit_input_digest=audit_digest,
         )
 
-    shares = dict(audit.goal_shares)
+    shares = dict(audit_state.goal_shares)
     obligations_by_id = {item.goal_id: item for item in obligations}
     neglected = []
-    for goal_id in audit.neglected_goals:
+    for goal_id in audit_state.neglected_goals:
         obligation = obligations_by_id.get(goal_id)
         if obligation is None:
             continue
@@ -201,6 +282,7 @@ def select_with_allocation_guard(
             rebalanced_goal_id=goal_id,
             rebalanced_goal_relation_receipts=supporting_receipts,
             goal_relation_mode=resolved_relation_mode,
+            allocation_audit_input_digest=audit_digest,
         )
 
     return AllocationGuardResult(
@@ -211,4 +293,5 @@ def select_with_allocation_guard(
         rebalanced_goal_id=None,
         rebalanced_goal_relation_receipts=(),
         goal_relation_mode=resolved_relation_mode,
+        allocation_audit_input_digest=audit_digest,
     )

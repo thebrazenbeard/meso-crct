@@ -28,8 +28,69 @@ def relation_receipt(goal_id: str, target_id: str, *, source_id: str):
     return m.admit_goal_relation(relation, policy)
 
 
+def admitted_obligation(goal_id: str, minimum: float):
+    claim = m.GoalObligationClaim(
+        goal_id=goal_id,
+        minimum_nonprotective_share=minimum,
+        evidence=m.EvidenceRef(
+            producer_id="planner:goals",
+            producer_revision="v1",
+            subject_id=goal_id,
+            source_id=f"obligation:{goal_id}",
+            currentness=m.EvidenceCurrentness.CURRENT,
+        ),
+    )
+    policy = m.GoalObligationAdmissionPolicy(
+        policy_id="host:goal-obligations",
+        policy_revision="r1",
+        producers=(
+            m.GoalObligationProducerSpec(
+                producer_id="planner:goals",
+                producer_revision="v1",
+            ),
+        ),
+    )
+    return m.admit_goal_obligation(claim, policy)
+
+
+def obligations_for(*items):
+    return tuple(
+        admitted_obligation(goal_id, minimum)
+        for goal_id, _, minimum in items
+    )
+
+
 def audit_for(*items):
-    # items: (goal_id, current_share, minimum_share)
+    # Build an exact 10-cycle attested history matching requested shares.
+    obligations = obligations_for(*items)
+    samples = []
+    for index in range(10):
+        receipts = []
+        for goal_id, current_share, _ in items:
+            count = int(round(current_share * 10))
+            if index < count:
+                receipts.append(
+                    relation_receipt(
+                        goal_id,
+                        "target:loop",
+                        source_id=f"history:{goal_id}:{index}",
+                    )
+                )
+        samples.append(
+            m.AllocationSample(
+                target_id="target:loop",
+                priority=0.8,
+                dominant_driver="incentive_salience",
+                goal_relations=tuple(
+                    receipt.relation for receipt in receipts
+                ),
+                goal_relation_receipts=tuple(receipts),
+            )
+        )
+    return m.audit_attested_attention_budget(samples, obligations)
+
+
+def legacy_audit_for(*items):
     return m.AllocationAudit(
         nonprotective_samples=10,
         protective_samples=0,
@@ -45,7 +106,7 @@ def audit_for(*items):
     )
 
 
-def obligations_for(*items):
+def legacy_obligations_for(*items):
     return tuple(
         m.GoalObligation(goal_id, minimum)
         for goal_id, _, minimum in items
@@ -278,8 +339,8 @@ def test_legacy_no_receipt_behavior_remains_goal_identity_compatible():
             target("target:loop", incentive=1.0),
             target("goal:maintenance", semantic=0.6),
         ),
-        audit=audit_for(*audit_items),
-        obligations=obligations_for(*audit_items),
+        audit=legacy_audit_for(*audit_items),
+        obligations=legacy_obligations_for(*audit_items),
     )
 
     assert result.final_selection.selected_target_id == "goal:maintenance"
@@ -320,8 +381,8 @@ def test_explicit_legacy_mode_rejects_receipt_input():
                 target("target:loop", incentive=1.0),
                 target("target:maintenance", semantic=0.8),
             ),
-            audit=audit_for(*audit_items),
-            obligations=obligations_for(*audit_items),
+            audit=legacy_audit_for(*audit_items),
+            obligations=legacy_obligations_for(*audit_items),
             goal_relation_receipts=(receipt,),
             goal_relation_mode=Mode.LEGACY_TARGET_IDENTITY,
         )
