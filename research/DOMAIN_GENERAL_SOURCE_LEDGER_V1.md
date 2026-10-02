@@ -418,3 +418,31 @@ They cannot by themselves establish:
   - preserve outcome/teaching-signal class rather than assuming one unsigned or sign-only dopamine analogue.
 - ceiling:
   - small neurosurgical human sample; does not define a machine learning rule.
+
+
+## Arousal / regulatory systems
+
+### DG-E-031 — NIMH RDoC Arousal and Regulatory Systems
+- current constructs:
+  - Arousal
+  - Circadian Rhythms
+  - Sleep-Wakefulness
+- key boundary:
+  - NIMH explicitly defines arousal as distinct from motivation and valence while allowing covariance/interactions.
+- architecture use:
+  - prevent MESO recruitment, action vigor and domain-specific arousal from collapsing into one generic scalar;
+  - treat machine runtime/readiness state as an external functional interface unless a measurable core construct is defined.
+
+### DG-E-032 — NIMH RDoC Arousal construct
+- contribution:
+  - arousal concerns sensitivity to external/internal stimuli;
+  - can modulate selectivity and responsiveness;
+  - can accompany increased or decreased locomotor behavior.
+- architecture use:
+  - reject `more arousal == more action vigor`.
+
+### DG-E-033 — NIMH RDoC Sleep-Wakefulness / Circadian constructs
+- contribution:
+  - sleep/wake, circadian timing and momentary arousal are overlapping but distinguishable regulatory systems.
+- architecture use:
+  - machine suspension/availability and time-dependent scheduling should not be mislabeled as motive or desire.
