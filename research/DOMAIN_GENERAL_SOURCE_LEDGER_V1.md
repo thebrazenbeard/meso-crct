@@ -446,3 +446,37 @@ They cannot by themselves establish:
   - sleep/wake, circadian timing and momentary arousal are overlapping but distinguishable regulatory systems.
 - architecture use:
   - machine suspension/availability and time-dependent scheduling should not be mislabeled as motive or desire.
+
+
+## Effort / control-allocation refinements
+
+### DG-E-034 — Silvestrini, Musslick, Berry & Vassena (2023)
+- title: *An integrative effort: Bridging motivational intensity theory and recent neurocomputational and neuronal models of effort and control allocation*
+- journal: Psychological Review
+- DOI: `10.1037/rev0000372`
+- contribution:
+  - integrates motivational-intensity theory with Expected Value of Control, reinforcement meta-learner and neuronal effort models;
+  - highlights non-monotonic relations between task difficulty and effort allocation.
+- architecture use:
+  - reject `difficulty == exerted effort`;
+  - couple willingness/effort allocation to feasibility and justified maximum effort.
+
+### DG-E-035 — Yee (2024)
+- title: *Neural and Computational Mechanisms of Motivation and Decision-making*
+- journal: Journal of Cognitive Neuroscience
+- DOI: `10.1162/jocn_a_02258`
+- contribution:
+  - emphasizes computational decomposition of incentive effects on decision components;
+  - argues organisms may optimize toward desired internal state rather than merely external incentive value.
+- architecture use:
+  - comparison surface for effort, homeostasis and internal-state-dependent motivation;
+  - not a universal MESO objective.
+
+### DG-E-036 — Scholey, Lugtmeijer & Apps (2024)
+- title: *The neuroeconomics of work: Computational and neural mechanisms of the dynamics of effort-based decisions*
+- DOI: `10.31234/osf.io/csbv7`
+- status: preprint / lower evidence ceiling.
+- contribution:
+  - reviews dynamic, context-dependent willingness to exert effort across motivational domains.
+- architecture use:
+  - treat effort appraisal as current-state/candidate dependent, not one stable motivation trait.
