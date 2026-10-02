@@ -199,3 +199,67 @@ Before architecture freeze, each high-impact proposition should be traceable to 
 1. a specific external source;
 2. a donor artifact clearly labeled as synthesis;
 3. an explicit MESO design hypothesis with a falsification test.
+
+
+## Additional sexuality-diversity / control sources
+
+### SX-E-018 — Sexual fluidity review (2023)
+- title: *The Current State of Sexual Fluidity Research*
+- journal: Current Opinion in Psychology 49
+- DOI: `10.1016/j.copsyc.2022.101497`
+- contribution: orientation may change over time across multiple dimensions rather than as one static category.
+- architecture use: attraction, behavior and authored identity require distinct state/currentness semantics.
+
+### SX-E-019 — Sexual fantasy review (2023)
+- authors: Lehmiller & Gormezano
+- title: *Sexual fantasy research: A contemporary review*
+- journal: Current Opinion in Psychology 49:101496
+- DOI: `10.1016/j.copsyc.2022.101496`
+- contribution: fantasy content is not necessarily synonymous with real-world interest or behavior; research samples have important demographic limitations.
+- architecture use: fantasy/imagination belongs to appraisal/script state and never directly authorizes action.
+
+### SX-E-020 — Ace-spectrum desire/fantasy study (2024)
+- title: *Deepening Sexual Desire and Erotic Fantasies Research in the ACE Spectrum: Comparing the Experiences of Asexual, Demisexual, Gray-Asexual, and Questioning People*
+- journal: Archives of Sexual Behavior 53:1031–1045
+- contribution: ace-spectrum subgroups show heterogeneous desire/fantasy patterns.
+- architecture use: low/conditional attraction must coexist with independent libido, fantasy, arousal and identity dimensions.
+
+### SX-E-021 — Pleasure / agency scoping review (2025)
+- authors: van Ditzhuijzen & Overeem
+- title: *Pleasure-Inclusive Sex Education, Sexual Agency, and Sexual Well-Being in Adolescents and Young Adults: A Scoping Review*
+- journal: Archives of Sexual Behavior 54:1627–1648
+- DOI: `10.1007/s10508-025-03103-8`
+- contribution: sexual agency-related constructs correlate with sexual well-being, but causal evidence for a distinct pleasure-education effect remains limited.
+- architecture use: agency cannot be reduced to pleasure or frequency.
+
+### SX-E-022 — BDSM research review (2023)
+- author: Abdul Ahmed
+- title: *Research in BDSM: 40 Years Along*
+- DOI: `10.1093/oso/9780197658598.003.0002`
+- contribution: reviews consent/power exchange, identity, community, gender and other BDSM research without assuming one universal meaning.
+- architecture use: power role, negotiated scope, agency and current consent require independent representation.
+
+### SX-E-023 — BDSM positive-effects systematic review (2024)
+- authors: Melavc, Jug & Gomboc
+- DOI: `10.5559/di.33.3.04`
+- contribution: review identifies reported communication, negotiation, trust, self-awareness and relationship effects while noting the limited evidence base.
+- architecture use: candidate positive mechanisms only; no universalization of kink practice.
+
+### SX-E-024 — Compulsive sexual behavior sexual-medicine review (2024)
+- authors: Briken et al.
+- title: *Assessment and treatment of compulsive sexual behavior disorder: a sexual medicine perspective*
+- journal: Sexual Medicine Reviews 12(3):355–370
+- DOI: `10.1093/sxmrev/qeae014`
+- contribution:
+  - distinguishes loss of control/adverse consequences from high desire or high frequency alone;
+  - warns against moral/pathologizing interpretations;
+  - discusses excitation/disinhibition and cue-attentional capture.
+- architecture use: anti-compulsion should target allocation capture, failed control, cue lock and pursuit despite low satisfaction—not high sexuality itself.
+
+### SX-E-025 — Digital sexual interaction framework (2021)
+- authors: Döring et al.
+- title: *Sexual Interaction in Digital Contexts and Its Implications for Sexual Health: A Conceptual Analysis*
+- journal: Frontiers in Psychology 12:769732
+- DOI: `10.3389/fpsyg.2021.769732`
+- contribution: distinguishes sexual interaction through, via and with digital technologies.
+- architecture use: represent interaction medium/actor/representation explicitly; AI-human sexuality is not merely a deficient copy of physical sexual interaction.
