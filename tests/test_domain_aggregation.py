@@ -199,3 +199,89 @@ def test_registry_binds_registered_kind_to_evidence_producer():
             ],
             reg,
         )
+
+
+def test_real_domain_aggregate_has_provenance_digest():
+    reg = registry(spec("sexual_relevance", "domain_activation"))
+    view = aggregate(
+        [contribution("sexual_relevance", 0.8, source_id="src:1")],
+        reg,
+    )[0]
+
+    assert hasattr(view, "aggregation_digest")
+    assert view.aggregation_digest
+
+
+def test_aggregation_digest_binds_member_and_registry_provenance():
+    ContributionKindSpec = public("ContributionKindSpec")
+    ContributionRegistry = public("ContributionRegistry")
+
+    def build(
+        *,
+        profile_revision="profile-v1",
+        producer_revision="producer-v1",
+        magnitude=0.8,
+        source_id="src:1",
+    ):
+        item = m.DomainContribution(
+            domain_id="sexuality",
+            profile_revision=profile_revision,
+            target_id="target:a",
+            contribution_kind="sexual_relevance",
+            magnitude=magnitude,
+            evidence=m.EvidenceRef(
+                producer_id="profile:test",
+                producer_revision=producer_revision,
+                subject_id="target:a",
+                source_id=source_id,
+                currentness=m.EvidenceCurrentness.CURRENT,
+            ),
+        )
+        kind_spec = ContributionKindSpec(
+            domain_id="sexuality",
+            profile_revision=profile_revision,
+            contribution_kind="sexual_relevance",
+            family_id="domain_activation",
+            producer_id="profile:test",
+            producer_revision=producer_revision,
+        )
+        return aggregate(
+            [item],
+            ContributionRegistry(specs=(kind_spec,)),
+        )[0]
+
+    baseline = build()
+    changed_profile = build(profile_revision="profile-v2")
+    changed_producer = build(producer_revision="producer-v2")
+    changed_magnitude = build(magnitude=0.7)
+    changed_source = build(source_id="src:2")
+
+    assert baseline.aggregation_digest != changed_profile.aggregation_digest
+    assert baseline.aggregation_digest != changed_producer.aggregation_digest
+    assert baseline.aggregation_digest != changed_magnitude.aggregation_digest
+    assert baseline.aggregation_digest != changed_source.aggregation_digest
+
+
+def test_manual_family_view_cannot_forge_aggregation_receipt():
+    with pytest.raises(TypeError):
+        m.ContributionFamilyView(
+            target_id="target:a",
+            family_id="domain_activation",
+            magnitude=0.8,
+            support_count=1,
+            contribution_kinds=("sexual_relevance",),
+            source_ids=("src:fake",),
+            aggregation_digest="forged",
+        )
+
+
+def test_manual_legacy_family_view_without_receipt_remains_supported():
+    view = m.ContributionFamilyView(
+        target_id="target:a",
+        family_id="domain_activation",
+        magnitude=0.8,
+        support_count=1,
+        contribution_kinds=("sexual_relevance",),
+        source_ids=("src:legacy",),
+    )
+    assert view.aggregation_digest is None

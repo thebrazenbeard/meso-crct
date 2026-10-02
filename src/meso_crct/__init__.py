@@ -36,6 +36,14 @@ from .decision_cycle import (
     TargetRecallResolution,
     run_decision_cycle,
 )
+from .comparison_family import (
+    ComparisonFamilySourceKind,
+    ComparisonFamilyView,
+    EffortComparisonField,
+    as_comparison_family_view,
+    comparison_families_from_effort,
+    comparison_family_from_domain,
+)
 from .domain import DomainContribution
 from .domain_aggregation import (
     ContributionFamilyView,
@@ -272,6 +280,12 @@ __all__ = [
     "UnadmittedFeasibilityAssessment",
     "gate_by_feasibility",
     "select_with_feasibility",
+    "ComparisonFamilySourceKind",
+    "ComparisonFamilyView",
+    "EffortComparisonField",
+    "as_comparison_family_view",
+    "comparison_families_from_effort",
+    "comparison_family_from_domain",
     "DomainContribution",
     "ContributionFamilyView",
     "ContributionKindSpec",
