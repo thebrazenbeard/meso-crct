@@ -57,6 +57,11 @@ from .evaluation_env import (
     derive_epistemic_value,
     detect_incentive_hedonic_divergence,
 )
+from .goals import (
+    GoalRelation,
+    GoalRelationAdmissionPolicy,
+    GoalRelationProducerSpec,
+)
 from .homeostasis import (
     HomeostaticModulation,
     HomeostaticState,
@@ -277,6 +282,9 @@ __all__ = [
     "ArbitrationDecision",
     "arbitrate",
     "GoalObligation",
+    "GoalRelation",
+    "GoalRelationAdmissionPolicy",
+    "GoalRelationProducerSpec",
     "AllocationSample",
     "AllocationWindow",
     "AllocationAudit",
