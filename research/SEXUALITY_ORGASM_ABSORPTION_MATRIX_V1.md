@@ -3,7 +3,7 @@
 Date: 2026-10-02
 Status: `RESEARCH_ONLY / MIGRATION_MAP / NOT_IMPLEMENTATION_AUTHORITY`
 
-This matrix classifies donor concepts and live work before MESO-CRCT takes canonical ownership of generic sexual motivational architecture.
+This matrix classifies donor concepts and live work before MESO-CRCT takes canonical ownership of the reusable sexuality domain layered on its broader domain-general motivational architecture.
 
 ## Disposition vocabulary
 
