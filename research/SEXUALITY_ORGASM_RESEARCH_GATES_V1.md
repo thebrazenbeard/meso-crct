@@ -5,6 +5,22 @@ Status: `PRE_IMPLEMENTATION_GATE / RESEARCH_ONLY`
 
 No sexual-domain implementation should begin until the following questions have explicit answers, evidence ceilings and hostile tests.
 
+## Core dependency — domain-general MESO first
+
+Sexual architecture must not freeze against an unstable generic core.
+
+The parallel research line in MESO Draft PR #7 identifies four higher-priority core questions that should be resolved before sexual architecture moves into implementation design:
+
+1. cross-domain arbitration beyond the current fixed `MOTIVATIONAL > EPISTEMIC > ORIENTING` precedence;
+2. effort valuation and action vigor;
+3. feasibility/expectancy and delay cost;
+4. predictive allostasis/resource-state interface.
+
+Sexuality should consume those general mechanisms where applicable rather than re-implement sexual-only versions of effort, temporal cost, feasibility, resource pressure or arbitration.
+
+This is a dependency between **research subjects**, not a merge-order or runtime dependency. Both PRs remain draft/source-only.
+
+
 ## Gate 1 — Domain ontology
 
 ### Question
