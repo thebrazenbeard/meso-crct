@@ -43,6 +43,8 @@ from .episode import (
     process_appraised_experience,
 )
 from .events import EventIdentity, EventSequencer
+from .evidence import EvidenceCurrentness, EvidenceRef
+from .feasibility import FeasibilityAssessment, FeasibilityState
 from .evaluation_env import (
     EvalAction,
     EvalStep,
@@ -207,6 +209,10 @@ __all__ = [
     "process_appraised_experience",
     "EventIdentity",
     "EventSequencer",
+    "EvidenceCurrentness",
+    "EvidenceRef",
+    "FeasibilityState",
+    "FeasibilityAssessment",
     "DynamicsConfig",
     "decay_toward",
     "advance_without_input",
