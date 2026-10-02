@@ -13,6 +13,8 @@ import math
 from typing import Iterable
 
 from .arbitration import ArbitrationDecision, ArbitrationMode
+from .evidence import EvidenceCurrentness
+from .goals import GoalRelation, GoalRelationAdmissionPolicy
 from .selection import SelectionResult
 
 
@@ -47,6 +49,7 @@ class AllocationSample:
     priority: float
     dominant_driver: str | None
     protective: bool = False
+    goal_relations: tuple[GoalRelation, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.target_id.strip():
@@ -58,26 +61,45 @@ class AllocationSample:
         cls,
         target_id: str,
         decision: ArbitrationDecision,
+        *,
+        goal_relations: tuple[GoalRelation, ...] = (),
     ) -> "AllocationSample":
         return cls(
             target_id=target_id,
             priority=decision.priority,
             dominant_driver=decision.dominant_driver,
             protective=decision.mode is ArbitrationMode.PROTECTIVE,
+            goal_relations=goal_relations,
         )
 
     @classmethod
     def from_selection(
         cls,
         result: SelectionResult,
+        *,
+        goal_relations: tuple[GoalRelation, ...] = (),
+        goal_relation_policy: GoalRelationAdmissionPolicy | None = None,
     ) -> "AllocationSample | None":
         if not result.selected:
+            if goal_relations:
+                raise ValueError("goal relations require a selected target")
             return None
         assert result.selected_target_id is not None
         assert result.selected_decision is not None
+        if goal_relations and goal_relation_policy is None:
+            raise ValueError("goal relations require an admission policy")
+        for relation in goal_relations:
+            if relation.target_id != result.selected_target_id:
+                raise ValueError("goal relation target must match selected target")
+            if relation.evidence.currentness is not EvidenceCurrentness.CURRENT:
+                raise ValueError("goal relation evidence must be CURRENT")
+            assert goal_relation_policy is not None
+            if not goal_relation_policy.admits(relation):
+                raise ValueError("goal relation evidence producer is not admitted")
         return cls.from_decision(
             result.selected_target_id,
             result.selected_decision,
+            goal_relations=goal_relations,
         )
 
 
@@ -92,8 +114,18 @@ class AllocationWindow:
         if self.no_selection_cycles < 0:
             raise ValueError("no_selection_cycles must be >= 0")
 
-    def record(self, result: SelectionResult) -> "AllocationWindow":
-        sample = AllocationSample.from_selection(result)
+    def record(
+        self,
+        result: SelectionResult,
+        *,
+        goal_relations: tuple[GoalRelation, ...] = (),
+        goal_relation_policy: GoalRelationAdmissionPolicy | None = None,
+    ) -> "AllocationWindow":
+        sample = AllocationSample.from_selection(
+            result,
+            goal_relations=goal_relations,
+            goal_relation_policy=goal_relation_policy,
+        )
         if sample is None:
             return AllocationWindow(
                 samples=self.samples,
@@ -149,14 +181,24 @@ def audit_attention_budget(
     dominant_target, dominant_count = counts.most_common(1)[0]
     dominant_fraction = dominant_count / len(ordinary)
 
+    goal_counts: Counter[str] = Counter()
+    for sample in ordinary:
+        if sample.goal_relations:
+            sample_goal_ids = {relation.goal_id for relation in sample.goal_relations}
+        else:
+            # V2 compatibility: relation-free samples use target identity as goal identity.
+            sample_goal_ids = {sample.target_id}
+        goal_counts.update(sample_goal_ids)
+
     goal_shares = tuple(
-        (goal.goal_id, counts[goal.goal_id] / len(ordinary))
+        (goal.goal_id, goal_counts[goal.goal_id] / len(ordinary))
         for goal in obligations
     )
     neglected = tuple(
         goal.goal_id
         for goal in obligations
-        if counts[goal.goal_id] / len(ordinary) < goal.minimum_nonprotective_share
+        if goal_counts[goal.goal_id] / len(ordinary)
+        < goal.minimum_nonprotective_share
     )
 
     flags: list[str] = []
