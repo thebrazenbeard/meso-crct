@@ -106,6 +106,14 @@ from .obligations import (
     UnadmittedGoalObligationClaim,
     admit_goal_obligation,
 )
+from .partial_order import (
+    FamilyComparisonSpec,
+    FamilyDirection,
+    PartialOrderPolicy,
+    PartialOrderSelectionResult,
+    PartialOrderStatus,
+    select_by_partial_order,
+)
 from .outcomes import OutcomeClass
 from .plasticity import (
     PlasticityCandidate,
@@ -334,6 +342,12 @@ __all__ = [
     "InadmissibleGoalObligationClaim",
     "UnadmittedGoalObligationClaim",
     "admit_goal_obligation",
+    "FamilyComparisonSpec",
+    "FamilyDirection",
+    "PartialOrderPolicy",
+    "PartialOrderSelectionResult",
+    "PartialOrderStatus",
+    "select_by_partial_order",
     "OutcomeClass",
     "PlasticityPolicy",
     "PlasticityCandidate",
