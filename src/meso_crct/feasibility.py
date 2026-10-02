@@ -1,4 +1,4 @@
-﻿"""Outcome feasibility appraisals kept separate from desirability."""
+"""Outcome feasibility appraisals kept separate from desirability."""
 
 from __future__ import annotations
 
@@ -38,6 +38,8 @@ class FeasibilityAssessment:
     def __post_init__(self) -> None:
         if not self.target_id.strip():
             raise ValueError("target_id must be non-empty")
+        if self.evidence.subject_id != self.target_id:
+            raise ValueError("feasibility evidence subject must match target_id")
         object.__setattr__(
             self,
             "expected_success",
