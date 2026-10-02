@@ -89,6 +89,15 @@ from .memory import (
     release_association,
     revert_last,
 )
+from .obligations import (
+    AdmittedGoalObligation,
+    GoalObligationAdmissionPolicy,
+    GoalObligationClaim,
+    GoalObligationProducerSpec,
+    InadmissibleGoalObligationClaim,
+    UnadmittedGoalObligationClaim,
+    admit_goal_obligation,
+)
 from .outcomes import OutcomeClass
 from .plasticity import (
     PlasticityCandidate,
@@ -304,6 +313,13 @@ __all__ = [
     "classify_phase",
     "frame",
     "evaluate_transition",
+    "AdmittedGoalObligation",
+    "GoalObligationAdmissionPolicy",
+    "GoalObligationClaim",
+    "GoalObligationProducerSpec",
+    "InadmissibleGoalObligationClaim",
+    "UnadmittedGoalObligationClaim",
+    "admit_goal_obligation",
     "OutcomeClass",
     "PlasticityPolicy",
     "PlasticityCandidate",
