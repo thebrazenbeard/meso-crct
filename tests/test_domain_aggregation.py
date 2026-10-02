@@ -1,4 +1,6 @@
-﻿import pytest
+import inspect
+
+import pytest
 
 import meso_crct as m
 
@@ -8,36 +10,64 @@ def public(name: str):
     return getattr(m, name)
 
 
-def evidence(source_id: str, currentness=None):
+def evidence(
+    source_id: str,
+    currentness=None,
+    *,
+    producer_id="profile:test",
+    producer_revision="producer-v1",
+):
     if currentness is None:
         currentness = m.EvidenceCurrentness.CURRENT
     return m.EvidenceRef(
-        producer_id="profile:test",
-        producer_revision="v1",
+        producer_id=producer_id,
+        producer_revision=producer_revision,
         subject_id="target:a",
         source_id=source_id,
         currentness=currentness,
     )
 
 
-def contribution(kind: str, magnitude: float, *, target_id="target:a", source_id="src:1", currentness=None):
+def contribution(
+    kind: str,
+    magnitude: float,
+    *,
+    target_id="target:a",
+    source_id="src:1",
+    currentness=None,
+    producer_id="profile:test",
+    producer_revision="producer-v1",
+):
     return m.DomainContribution(
         domain_id="sexuality",
-        profile_revision="v1",
+        profile_revision="profile-v1",
         target_id=target_id,
         contribution_kind=kind,
         magnitude=magnitude,
-        evidence=evidence(source_id, currentness=currentness),
+        evidence=evidence(
+            source_id,
+            currentness=currentness,
+            producer_id=producer_id,
+            producer_revision=producer_revision,
+        ),
     )
 
 
-def spec(kind: str, family: str):
+def spec(
+    kind: str,
+    family: str,
+    *,
+    producer_id="profile:test",
+    producer_revision="producer-v1",
+):
     ContributionKindSpec = public("ContributionKindSpec")
     return ContributionKindSpec(
         domain_id="sexuality",
-        profile_revision="v1",
+        profile_revision="profile-v1",
         contribution_kind=kind,
         family_id=family,
+        producer_id=producer_id,
+        producer_revision=producer_revision,
     )
 
 
@@ -135,3 +165,37 @@ def test_duplicate_registry_key_fails_construction():
     duplicate = spec("sexual_relevance", "domain_activation")
     with pytest.raises(ValueError):
         ContributionRegistry(specs=(duplicate, duplicate))
+
+
+def test_registry_binds_registered_kind_to_evidence_producer():
+    ContributionKindSpec = public("ContributionKindSpec")
+    InadmissibleContributionEvidence = public("InadmissibleContributionEvidence")
+    parameters = inspect.signature(ContributionKindSpec).parameters
+    assert "producer_id" in parameters
+    assert "producer_revision" in parameters
+
+    reg = registry(spec("sexual_relevance", "domain_activation"))
+
+    with pytest.raises(InadmissibleContributionEvidence):
+        aggregate(
+            [
+                contribution(
+                    "sexual_relevance",
+                    0.8,
+                    producer_id="profile:spoof",
+                )
+            ],
+            reg,
+        )
+
+    with pytest.raises(InadmissibleContributionEvidence):
+        aggregate(
+            [
+                contribution(
+                    "sexual_relevance",
+                    0.8,
+                    producer_revision="producer-v2",
+                )
+            ],
+            reg,
+        )

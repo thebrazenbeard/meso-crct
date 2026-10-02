@@ -22,9 +22,18 @@ class ContributionKindSpec:
     profile_revision: str
     contribution_kind: str
     family_id: str
+    producer_id: str
+    producer_revision: str
 
     def __post_init__(self) -> None:
-        for name in ("domain_id", "profile_revision", "contribution_kind", "family_id"):
+        for name in (
+            "domain_id",
+            "profile_revision",
+            "contribution_kind",
+            "family_id",
+            "producer_id",
+            "producer_revision",
+        ):
             if not getattr(self, name).strip():
                 raise ValueError(f"{name} must be non-empty")
 
@@ -49,8 +58,17 @@ class ContributionRegistry:
             contribution.contribution_kind,
         )
         for spec in self.specs:
-            if spec.key == key:
-                return spec
+            if spec.key != key:
+                continue
+            if contribution.evidence.producer_id != spec.producer_id:
+                raise InadmissibleContributionEvidence(
+                    "domain contribution evidence producer does not match registry"
+                )
+            if contribution.evidence.producer_revision != spec.producer_revision:
+                raise InadmissibleContributionEvidence(
+                    "domain contribution evidence revision does not match registry"
+                )
+            return spec
         raise UnknownContributionKind(
             "unregistered contribution kind: "
             f"{contribution.domain_id}/{contribution.profile_revision}/"
