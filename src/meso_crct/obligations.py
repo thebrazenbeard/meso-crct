@@ -1,12 +1,17 @@
-﻿"""Admission of provenance-bound goal allocation obligation claims."""
+"""Admission of provenance-bound goal allocation obligation claims."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
+import json
 import math
 
 from .allocation import GoalObligation
 from .evidence import EvidenceCurrentness, EvidenceRef
+
+
+_GOAL_OBLIGATION_ADMISSION_TOKEN = object()
 
 
 class InadmissibleGoalObligationClaim(ValueError):
@@ -84,18 +89,89 @@ class GoalObligationAdmissionPolicy:
         return any(producer.key == key for producer in self.producers)
 
 
-@dataclass(frozen=True, slots=True, kw_only=True)
+@dataclass(frozen=True, slots=True, init=False)
 class AdmittedGoalObligation(GoalObligation):
     evidence: EvidenceRef
     admission_policy_id: str
     admission_policy_revision: str
+    admission_input_digest: str
 
-    def __post_init__(self) -> None:
-        super(AdmittedGoalObligation, self).__post_init__()
-        if not self.admission_policy_id.strip():
+    def __init__(
+        self,
+        goal_id: str,
+        minimum_nonprotective_share: float = 0.0,
+        *,
+        evidence: EvidenceRef,
+        admission_policy_id: str,
+        admission_policy_revision: str,
+        admission_input_digest: str,
+        _token: object | None = None,
+    ) -> None:
+        if _token is not _GOAL_OBLIGATION_ADMISSION_TOKEN:
+            raise TypeError(
+                "AdmittedGoalObligation must be issued by admit_goal_obligation"
+            )
+        object.__setattr__(self, "goal_id", goal_id)
+        object.__setattr__(
+            self,
+            "minimum_nonprotective_share",
+            minimum_nonprotective_share,
+        )
+        GoalObligation.__post_init__(self)
+
+
+        if evidence.subject_id != self.goal_id:
+            raise ValueError("admitted obligation evidence subject must match goal_id")
+        if not admission_policy_id.strip():
             raise ValueError("admission_policy_id must be non-empty")
-        if not self.admission_policy_revision.strip():
+        if not admission_policy_revision.strip():
             raise ValueError("admission_policy_revision must be non-empty")
+        if not admission_input_digest.strip():
+            raise ValueError("admission_input_digest must be non-empty")
+
+        object.__setattr__(self, "evidence", evidence)
+        object.__setattr__(self, "admission_policy_id", admission_policy_id)
+        object.__setattr__(
+            self,
+            "admission_policy_revision",
+            admission_policy_revision,
+        )
+        object.__setattr__(
+            self,
+            "admission_input_digest",
+            admission_input_digest,
+        )
+
+
+def _admission_digest(
+    claim: GoalObligationClaim,
+    policy: GoalObligationAdmissionPolicy,
+) -> str:
+    payload = {
+        "claim": {
+            "goal_id": claim.goal_id,
+            "minimum_nonprotective_share": claim.minimum_nonprotective_share,
+            "evidence": {
+                "producer_id": claim.evidence.producer_id,
+                "producer_revision": claim.evidence.producer_revision,
+                "subject_id": claim.evidence.subject_id,
+                "source_id": claim.evidence.source_id,
+                "currentness": claim.evidence.currentness.value,
+            },
+        },
+        "policy": {
+            "policy_id": policy.policy_id,
+            "policy_revision": policy.policy_revision,
+            "producers": sorted(producer.key for producer in policy.producers),
+        },
+    }
+    encoded = json.dumps(
+        payload,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=True,
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def admit_goal_obligation(
@@ -116,4 +192,6 @@ def admit_goal_obligation(
         evidence=claim.evidence,
         admission_policy_id=policy.policy_id,
         admission_policy_revision=policy.policy_revision,
+        admission_input_digest=_admission_digest(claim, policy),
+        _token=_GOAL_OBLIGATION_ADMISSION_TOKEN,
     )

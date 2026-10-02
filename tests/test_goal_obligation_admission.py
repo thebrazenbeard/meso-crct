@@ -1,4 +1,4 @@
-﻿import inspect
+import inspect
 
 import pytest
 
@@ -154,3 +154,77 @@ def test_admitted_obligation_retains_claim_and_policy_provenance():
     assert admitted.evidence == claim().evidence
     assert admitted.admission_policy_id == "host:goal-obligations"
     assert admitted.admission_policy_revision == "r1"
+
+
+def test_admitted_obligation_cannot_be_forged_directly():
+    AdmittedGoalObligation = public("AdmittedGoalObligation")
+    with pytest.raises(TypeError):
+        AdmittedGoalObligation(
+            goal_id="goal:g",
+            minimum_nonprotective_share=0.4,
+            evidence=evidence(),
+            admission_policy_id="host:goal-obligations",
+            admission_policy_revision="r1",
+        )
+
+
+def test_admitted_obligation_has_digest_bound_to_claim_and_policy():
+    admitted = m.admit_goal_obligation(claim(), policy())
+    assert admitted.admission_input_digest
+
+    changed_value_claim = m.GoalObligationClaim(
+        goal_id="goal:g",
+        minimum_nonprotective_share=0.5,
+        evidence=evidence(),
+    )
+    changed_value = m.admit_goal_obligation(changed_value_claim, policy())
+
+    changed_source_claim = m.GoalObligationClaim(
+        goal_id="goal:g",
+        minimum_nonprotective_share=0.4,
+        evidence=m.EvidenceRef(
+            producer_id="planner:goals",
+            producer_revision="v1",
+            subject_id="goal:g",
+            source_id="goal-obligation:2",
+            currentness=m.EvidenceCurrentness.CURRENT,
+        ),
+    )
+    changed_source = m.admit_goal_obligation(changed_source_claim, policy())
+
+    changed_policy = m.GoalObligationAdmissionPolicy(
+        policy_id="host:goal-obligations",
+        policy_revision="r2",
+        producers=policy().producers,
+    )
+    changed_policy_admitted = m.admit_goal_obligation(claim(), changed_policy)
+
+    assert admitted.admission_input_digest != changed_value.admission_input_digest
+    assert admitted.admission_input_digest != changed_source.admission_input_digest
+    assert admitted.admission_input_digest != changed_policy_admitted.admission_input_digest
+
+
+def test_obligation_admission_digest_is_stable_under_producer_order():
+    p1 = m.GoalObligationProducerSpec(
+        producer_id="planner:goals",
+        producer_revision="v1",
+    )
+    p2 = m.GoalObligationProducerSpec(
+        producer_id="planner:backup",
+        producer_revision="v2",
+    )
+    first_policy = m.GoalObligationAdmissionPolicy(
+        policy_id="host:goal-obligations",
+        policy_revision="r1",
+        producers=(p1, p2),
+    )
+    second_policy = m.GoalObligationAdmissionPolicy(
+        policy_id="host:goal-obligations",
+        policy_revision="r1",
+        producers=(p2, p1),
+    )
+
+    first = m.admit_goal_obligation(claim(), first_policy)
+    second = m.admit_goal_obligation(claim(), second_policy)
+
+    assert first.admission_input_digest == second.admission_input_digest
