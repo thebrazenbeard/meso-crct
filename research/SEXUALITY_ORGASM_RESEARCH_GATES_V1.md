@@ -14,7 +14,8 @@ The parallel research line in MESO Draft PR #7 identifies four higher-priority c
 1. cross-domain arbitration beyond the current fixed `MOTIVATIONAL > EPISTEMIC > ORIENTING` precedence;
 2. effort valuation and action vigor;
 3. feasibility/expectancy and delay cost;
-4. predictive allostasis/resource-state interface.
+4. predictive resource-state / allostatic interface;
+5. aversive/threat learning and action semantics that preserve protection without using suffering as control currency.
 
 Sexuality should consume those general mechanisms where applicable rather than re-implement sexual-only versions of effort, temporal cost, feasibility, resource pressure or arbitration.
 
