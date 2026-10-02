@@ -11,6 +11,7 @@ from .allocation import (
 )
 from .allocation_guard import (
     AllocationGuardResult,
+    GoalRelationGuardMode,
     select_with_allocation_guard,
 )
 from .appraisal import (
@@ -376,6 +377,7 @@ __all__ = [
     "audit_attention_budget",
     "audit_allocation_window",
     "AllocationGuardResult",
+    "GoalRelationGuardMode",
     "select_with_allocation_guard",
     "SourceKind",
     "Provenance",
