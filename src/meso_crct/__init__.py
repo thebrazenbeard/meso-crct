@@ -55,6 +55,16 @@ from .episode import (
 from .events import EventIdentity, EventSequencer
 from .evidence import EvidenceCurrentness, EvidenceRef
 from .feasibility import FeasibilityAssessment, FeasibilityState
+from .feasibility_gate import (
+    FeasibilityAdmissionPolicy,
+    FeasibilityAwareSelectionResult,
+    FeasibilityAwareStatus,
+    FeasibilityGateResult,
+    FeasibilityProducerSpec,
+    UnadmittedFeasibilityAssessment,
+    gate_by_feasibility,
+    select_with_feasibility,
+)
 from .evaluation_env import (
     EvalAction,
     EvalStep,
@@ -246,6 +256,14 @@ __all__ = [
     "EvidenceRef",
     "FeasibilityState",
     "FeasibilityAssessment",
+    "FeasibilityAdmissionPolicy",
+    "FeasibilityAwareSelectionResult",
+    "FeasibilityAwareStatus",
+    "FeasibilityGateResult",
+    "FeasibilityProducerSpec",
+    "UnadmittedFeasibilityAssessment",
+    "gate_by_feasibility",
+    "select_with_feasibility",
     "DomainContribution",
     "ContributionFamilyView",
     "ContributionKindSpec",
