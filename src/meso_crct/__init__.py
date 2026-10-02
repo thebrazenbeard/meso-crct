@@ -37,6 +37,14 @@ from .decision_cycle import (
     run_decision_cycle,
 )
 from .domain import DomainContribution
+from .domain_aggregation import (
+    ContributionFamilyView,
+    ContributionKindSpec,
+    ContributionRegistry,
+    InadmissibleContributionEvidence,
+    UnknownContributionKind,
+    aggregate_domain_contributions,
+)
 from .dynamics import DynamicsConfig, advance_without_input, decay_toward
 from .effort import EffortAssessment
 from .episode import (
@@ -231,6 +239,12 @@ __all__ = [
     "FeasibilityState",
     "FeasibilityAssessment",
     "DomainContribution",
+    "ContributionFamilyView",
+    "ContributionKindSpec",
+    "ContributionRegistry",
+    "UnknownContributionKind",
+    "InadmissibleContributionEvidence",
+    "aggregate_domain_contributions",
     "DynamicsConfig",
     "EffortAssessment",
     "decay_toward",
