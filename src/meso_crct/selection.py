@@ -27,8 +27,14 @@ class SelectionPolicy:
         ArbitrationMode.EPISTEMIC,
         ArbitrationMode.ORIENTING,
     )
+    policy_id: str = "legacy-v2"
+    policy_revision: str = "1"
 
     def __post_init__(self) -> None:
+        if not self.policy_id.strip():
+            raise ValueError("policy_id must be non-empty")
+        if not self.policy_revision.strip():
+            raise ValueError("policy_revision must be non-empty")
         if len(self.nonprotective_precedence) != len(_SELECTABLE_NONPROTECTIVE):
             raise ValueError("nonprotective precedence must name each selectable mode once")
         if set(self.nonprotective_precedence) != _SELECTABLE_NONPROTECTIVE:
@@ -60,6 +66,8 @@ class SelectionResult:
     selected_decision: ArbitrationDecision | None
     evaluations: tuple[TargetEvaluation, ...]
     used_protective_override: bool
+    policy_id: str = "legacy-v2"
+    policy_revision: str = "1"
 
     @property
     def selected(self) -> bool:
@@ -99,6 +107,8 @@ def select_target(
             selected_decision=selected.decision,
             evaluations=evaluations,
             used_protective_override=True,
+            policy_id=policy.policy_id,
+            policy_revision=policy.policy_revision,
         )
 
     selectable = tuple(
@@ -112,6 +122,8 @@ def select_target(
             selected_decision=None,
             evaluations=evaluations,
             used_protective_override=False,
+            policy_id=policy.policy_id,
+            policy_revision=policy.policy_revision,
         )
 
     mode_rank = {
@@ -131,4 +143,6 @@ def select_target(
         selected_decision=selected.decision,
         evaluations=evaluations,
         used_protective_override=False,
+        policy_id=policy.policy_id,
+        policy_revision=policy.policy_revision,
     )

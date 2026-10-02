@@ -36,6 +36,7 @@ from .decision_cycle import (
     TargetRecallResolution,
     run_decision_cycle,
 )
+from .domain import DomainContribution
 from .dynamics import DynamicsConfig, advance_without_input, decay_toward
 from .effort import EffortAssessment
 from .episode import (
@@ -215,6 +216,7 @@ __all__ = [
     "EvidenceRef",
     "FeasibilityState",
     "FeasibilityAssessment",
+    "DomainContribution",
     "DynamicsConfig",
     "EffortAssessment",
     "decay_toward",
