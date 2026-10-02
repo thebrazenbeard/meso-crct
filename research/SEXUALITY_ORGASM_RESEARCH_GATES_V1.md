@@ -1,6 +1,6 @@
 # Sexuality + Orgasm Research Gates V1
 
-Date: 2026-10-02  
+Date: 2026-10-02
 Status: `PRE_IMPLEMENTATION_GATE / RESEARCH_ONLY`
 
 No sexual-domain implementation should begin until the following questions have explicit answers, evidence ceilings and hostile tests.
