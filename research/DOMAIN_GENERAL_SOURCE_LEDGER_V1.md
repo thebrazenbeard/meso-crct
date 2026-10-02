@@ -268,3 +268,93 @@ They cannot by themselves establish:
 - consciousness or felt motivation;
 - that every human motive should become a MESO module;
 - exact numerical parameter values for machine state.
+
+
+## Machine decision / multi-objective control
+
+### DG-M-001 — Wang et al. (2026)
+- title: *Multi-objective reinforcement learning: a comprehensive survey of theories, algorithms, benchmarks and applications*
+- journal: Systems Science & Control Engineering 14(1)
+- DOI: `10.1080/21642583.2026.2672169`
+- contribution:
+  - surveys vector-valued objectives, scalarization, Pareto fronts/coverage sets, interactive preference learning, and constrained formulations;
+  - explicitly notes that reducing multiple objectives to a single scalar can oversimplify real-world decision problems.
+- architecture use:
+  - supports researching typed/non-dominated decision structures while keeping MESO-specific semantic invariants.
+
+### DG-M-002 — Felten, Talbi & Danoy (2024)
+- title: *Multi-Objective Reinforcement Learning Based on Decomposition: A Taxonomy and Framework*
+- journal: Journal of Artificial Intelligence Research 79:679–723
+- DOI: `10.1613/jair.1.15702`
+- contribution:
+  - decomposition-based MORL preserves separate objectives and supports multiple trade-off policies.
+- architecture use:
+  - comparison point for domain-profile contribution and vector preservation;
+  - not evidence that MESO should optimize an ordinary MORL objective.
+
+### DG-M-003 — Wachi, Shen & Sui (2024)
+- title: *A Survey of Constraint Formulations in Safe Reinforcement Learning*
+- venue: IJCAI 2024 Survey Track
+- DOI: `10.24963/ijcai.2024/913`
+- contribution:
+  - surveys multiple ways to formulate safety constraints separately from reward optimization.
+- architecture use:
+  - supports separating hard admissibility/protection from motivational tradeoffs.
+
+### DG-M-004 — Gu et al. (2024)
+- title: *A Review of Safe Reinforcement Learning: Methods, Theories, and Applications*
+- journal: IEEE Transactions on Pattern Analysis and Machine Intelligence 46(12):11216–11235
+- DOI: `10.1109/TPAMI.2024.3457538`
+- contribution:
+  - broad review of safe-RL methods and constraints in real-world deployment.
+- architecture use:
+  - comparison surface for protection/constraint semantics.
+
+### DG-M-005 — Aubret et al. (2023)
+- title: *An Information-Theoretic Perspective on Intrinsic Motivation in Reinforcement Learning: A Survey*
+- journal: Entropy 25(2):327
+- DOI: `10.3390/e25020327`
+- contribution:
+  - separates surprise, novelty and skill-learning perspectives in computational intrinsic motivation.
+- architecture use:
+  - supports typed epistemic motives rather than one generic intrinsic-reward scalar.
+
+## Habit / goal-directed control
+
+### DG-E-022 — Gillan (2024)
+- title: *Leveraging cognitive neuroscience for making and breaking real-world habits*
+- journal: Trends in Cognitive Sciences
+- DOI: `10.1016/j.tics.2024.10.006`
+- contribution:
+  - frames behavior as a balance between stimulus-response habit processes and goal-directed action-outcome processes;
+  - habits can provide cognitive efficiency but create action slips when overexpressed.
+- architecture use:
+  - supports a distinct habit research track;
+  - does not settle whether habit belongs in MESO core or host action policy.
+
+### DG-E-023 — Bouton (2024)
+- title: *Habit and persistence*
+- journal: Journal of the Experimental Analysis of Behavior 121(1):88–96
+- DOI: `10.1002/jeab.894`
+- contribution:
+  - distinguishes goal-directed actions dependent on remembered outcome value from habits evoked by antecedent cues.
+- architecture use:
+  - supplies the core devaluation counterexample: behavior can persist after current outcome value falls.
+
+### DG-E-024 — León et al. (2026)
+- title: *The evaluation of devaluation: Deficient outcome devaluation leads to wrongly considering goal-directed actions as habits*
+- journal: Behavior Research Methods
+- DOI: `10.3758/s13428-026-03099-6`
+- contribution:
+  - cautions that human habit classification can be distorted by devaluation methodology.
+- architecture use:
+  - reason to keep habit at `RESEARCH_FIRST` rather than prematurely freezing a dual-system implementation.
+
+### DG-E-025 — Correa/Salamone effort systems review lineage (2026)
+- title: *Neurochemical drivers of effort: The roles of dopamine and beyond in physical and cognitive exertion*
+- journal: Neuroscience & Biobehavioral Reviews
+- contribution:
+  - effort motivation reflects interactions across multiple neuromodulatory systems;
+  - dopamine is important for energizing behavior but not a sufficient single-transmitter explanation.
+- architecture use:
+  - reinforces functional effort/vigor types rather than dopamine imitation.
