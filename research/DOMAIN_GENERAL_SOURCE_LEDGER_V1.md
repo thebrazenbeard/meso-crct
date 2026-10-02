@@ -640,3 +640,39 @@ They cannot by themselves establish:
   - reviews a large ELECTRE literature built around outranking rather than a single compensatory utility score.
 - architecture use:
   - supports researching partial/incomplete ordering and non-compensatory vetoes as alternatives to universal scalarization.
+
+
+## Partial-order / Pareto-front selection refinements
+
+### DG-M-013 — Laumanns, Mostaghim & Rudolph (2006)
+- title: *Editorial: Evolutionary Multiobjective Optimization*
+- contribution:
+  - states the standard separation between an objective phase that identifies nondominated/Pareto-optimal alternatives and a preference phase that uses decision-maker information to select among them.
+- architecture use:
+  - supports separating evidence-derived dominance from policy-derived final choice.
+
+### DG-M-014 — O'Mahony & Wilson (2012)
+- title: *Sorted Pareto Dominance: An Extension to Pareto Dominance and Its Application in Soft Constraints*
+- DOI: `10.1109/ICTAI.2012.113`
+- contribution:
+  - treats Pareto dominance as a partial comparison relation and studies ways to strengthen it without ordinary additive utility.
+- architecture use:
+  - comparison reference for preserving partial order rather than forcing a universal total ranking.
+- ceiling:
+  - MESO does not adopt Sorted-Pareto directly.
+
+### DG-M-015 — Zheng & Wang (2023)
+- title: *Multi-Criteria Ranking by Using Relaxed Pareto Ranking Methods*
+- DOI: `10.1145/3563359.3597401`
+- contribution:
+  - demonstrates a practical consequence of ordinary Pareto ranking: many alternatives may remain insufficiently differentiated.
+- architecture use:
+  - supports explicit hostile-review concern that a MESO Pareto policy can become indecisive as dimensions grow;
+  - motivates keeping the policy-scoped comparable family set small.
+
+### DG-M-016 — multi-objective optimization lineage
+- contribution:
+  - Pareto dominance defines "no worse on every compared objective and strictly better on at least one" without assigning exchange rates across objectives.
+- architecture use:
+  - candidate minimal evidence-derived ordering after hard admissibility;
+  - any reduction of a multi-member frontier to one final target remains a separately declared preference/fallback policy.
