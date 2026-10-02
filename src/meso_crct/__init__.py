@@ -94,7 +94,11 @@ from .evaluation_env import (
 from .goals import (
     GoalRelation,
     GoalRelationAdmissionPolicy,
+    GoalRelationAdmissionReceipt,
     GoalRelationProducerSpec,
+    InadmissibleGoalRelation,
+    UnadmittedGoalRelation,
+    admit_goal_relation,
 )
 from .homeostasis import (
     HomeostaticModulation,
@@ -361,7 +365,11 @@ __all__ = [
     "GoalObligation",
     "GoalRelation",
     "GoalRelationAdmissionPolicy",
+    "GoalRelationAdmissionReceipt",
     "GoalRelationProducerSpec",
+    "InadmissibleGoalRelation",
+    "UnadmittedGoalRelation",
+    "admit_goal_relation",
     "AllocationSample",
     "AllocationWindow",
     "AllocationAudit",

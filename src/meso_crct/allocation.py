@@ -13,8 +13,12 @@ import math
 from typing import Iterable
 
 from .arbitration import ArbitrationDecision, ArbitrationMode
-from .evidence import EvidenceCurrentness
-from .goals import GoalRelation, GoalRelationAdmissionPolicy
+from .goals import (
+    GoalRelation,
+    GoalRelationAdmissionPolicy,
+    GoalRelationAdmissionReceipt,
+    admit_goal_relation,
+)
 from .selection import SelectionResult
 
 
@@ -50,11 +54,38 @@ class AllocationSample:
     dominant_driver: str | None
     protective: bool = False
     goal_relations: tuple[GoalRelation, ...] = ()
+    goal_relation_receipts: tuple[GoalRelationAdmissionReceipt, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.target_id.strip():
             raise ValueError("target_id must be non-empty")
         object.__setattr__(self, "priority", _unit(self.priority, name="priority"))
+
+        unmatched_relations = list(self.goal_relations)
+        for receipt in self.goal_relation_receipts:
+            try:
+                index = unmatched_relations.index(receipt.relation)
+            except ValueError as exc:
+                raise ValueError(
+                    "goal relation receipt must bind a stored goal relation"
+                ) from exc
+            unmatched_relations.pop(index)
+
+    @property
+    def attested_goal_relations(self) -> tuple[GoalRelation, ...]:
+        return tuple(receipt.relation for receipt in self.goal_relation_receipts)
+
+    @property
+    def unattested_goal_relations(self) -> tuple[GoalRelation, ...]:
+        unmatched = list(self.goal_relations)
+        for receipt in self.goal_relation_receipts:
+            index = unmatched.index(receipt.relation)
+            unmatched.pop(index)
+        return tuple(unmatched)
+
+    @property
+    def goal_relation_attestation_complete(self) -> bool:
+        return not self.unattested_goal_relations
 
     @classmethod
     def from_decision(
@@ -63,6 +94,7 @@ class AllocationSample:
         decision: ArbitrationDecision,
         *,
         goal_relations: tuple[GoalRelation, ...] = (),
+        goal_relation_receipts: tuple[GoalRelationAdmissionReceipt, ...] = (),
     ) -> "AllocationSample":
         return cls(
             target_id=target_id,
@@ -70,6 +102,7 @@ class AllocationSample:
             dominant_driver=decision.dominant_driver,
             protective=decision.mode is ArbitrationMode.PROTECTIVE,
             goal_relations=goal_relations,
+            goal_relation_receipts=goal_relation_receipts,
         )
 
     @classmethod
@@ -88,18 +121,21 @@ class AllocationSample:
         assert result.selected_decision is not None
         if goal_relations and goal_relation_policy is None:
             raise ValueError("goal relations require an admission policy")
+
+        receipts: list[GoalRelationAdmissionReceipt] = []
         for relation in goal_relations:
             if relation.target_id != result.selected_target_id:
                 raise ValueError("goal relation target must match selected target")
-            if relation.evidence.currentness is not EvidenceCurrentness.CURRENT:
-                raise ValueError("goal relation evidence must be CURRENT")
             assert goal_relation_policy is not None
-            if not goal_relation_policy.admits(relation):
-                raise ValueError("goal relation evidence producer is not admitted")
+            receipts.append(
+                admit_goal_relation(relation, goal_relation_policy)
+            )
+
         return cls.from_decision(
             result.selected_target_id,
             result.selected_decision,
             goal_relations=goal_relations,
+            goal_relation_receipts=tuple(receipts),
         )
 
 
