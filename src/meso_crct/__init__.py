@@ -9,6 +9,13 @@ from .allocation import (
     audit_allocation_window,
     audit_attention_budget,
 )
+from .allocation_attested import (
+    AttestedAllocationAuditReceipt,
+    AttestedAllocationIntegrityError,
+    UnadmittedAllocationObligation,
+    UnattestedAllocationSample,
+    audit_attested_attention_budget,
+)
 from .allocation_guard import (
     AllocationGuardResult,
     GoalRelationGuardMode,
@@ -374,6 +381,11 @@ __all__ = [
     "AllocationSample",
     "AllocationWindow",
     "AllocationAudit",
+    "AttestedAllocationAuditReceipt",
+    "AttestedAllocationIntegrityError",
+    "UnadmittedAllocationObligation",
+    "UnattestedAllocationSample",
+    "audit_attested_attention_budget",
     "audit_attention_budget",
     "audit_allocation_window",
     "AllocationGuardResult",

@@ -10,7 +10,7 @@ from __future__ import annotations
 from collections import Counter
 from dataclasses import dataclass
 import math
-from typing import Iterable
+from typing import Callable, Iterable
 
 from .arbitration import ArbitrationDecision, ArbitrationMode
 from .goals import (
@@ -188,13 +188,14 @@ class AllocationAudit:
         return not self.flags
 
 
-def audit_attention_budget(
+def _audit_attention_budget_core(
     samples: Iterable[AllocationSample],
     obligations: Iterable[GoalObligation],
     *,
-    crowdout_fraction: float = 0.75,
+    crowdout_fraction: float,
+    goal_ids_for_sample: Callable[[AllocationSample], Iterable[str]],
 ) -> AllocationAudit:
-    """Audit selected processing slots while excluding protective episodes."""
+    """Shared allocation math with caller-supplied goal attribution semantics."""
     crowdout_fraction = _unit(crowdout_fraction, name="crowdout_fraction")
     samples = tuple(samples)
     obligations = tuple(obligations)
@@ -219,12 +220,7 @@ def audit_attention_budget(
 
     goal_counts: Counter[str] = Counter()
     for sample in ordinary:
-        if sample.goal_relations:
-            sample_goal_ids = {relation.goal_id for relation in sample.goal_relations}
-        else:
-            # V2 compatibility: relation-free samples use target identity as goal identity.
-            sample_goal_ids = {sample.target_id}
-        goal_counts.update(sample_goal_ids)
+        goal_counts.update(set(goal_ids_for_sample(sample)))
 
     goal_shares = tuple(
         (goal.goal_id, goal_counts[goal.goal_id] / len(ordinary))
@@ -265,6 +261,28 @@ def audit_attention_budget(
         goal_shares=goal_shares,
         neglected_goals=neglected,
         flags=tuple(flags),
+    )
+
+
+def _legacy_goal_ids_for_sample(sample: AllocationSample) -> tuple[str, ...]:
+    if sample.goal_relations:
+        return tuple(relation.goal_id for relation in sample.goal_relations)
+    # V2 compatibility: relation-free samples use target identity as goal identity.
+    return (sample.target_id,)
+
+
+def audit_attention_budget(
+    samples: Iterable[AllocationSample],
+    obligations: Iterable[GoalObligation],
+    *,
+    crowdout_fraction: float = 0.75,
+) -> AllocationAudit:
+    """Audit selected processing slots using V2-compatible goal attribution."""
+    return _audit_attention_budget_core(
+        samples,
+        obligations,
+        crowdout_fraction=crowdout_fraction,
+        goal_ids_for_sample=_legacy_goal_ids_for_sample,
     )
 
 
