@@ -1,4 +1,4 @@
-﻿"""Effort appraisal kept separate from value and execution authority."""
+"""Effort appraisal kept separate from value and execution authority."""
 
 from __future__ import annotations
 
@@ -27,6 +27,8 @@ class EffortAssessment:
     def __post_init__(self) -> None:
         if not self.target_id.strip():
             raise ValueError("target_id must be non-empty")
+        if self.evidence.subject_id != self.target_id:
+            raise ValueError("effort evidence subject must match target_id")
         for name in ("required_effort", "effort_cost", "willingness_to_exert"):
             object.__setattr__(self, name, _unit(getattr(self, name), name=name))
         if self.vigor_proposal is not None:
