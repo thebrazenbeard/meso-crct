@@ -1,7 +1,8 @@
-﻿"""Strict allocation auditing over admitted relations and obligations only."""
+"""Strict allocation auditing over admitted relations and obligations only."""
 
 from __future__ import annotations
 
+from collections import Counter
 from dataclasses import dataclass
 import hashlib
 import json
@@ -37,6 +38,7 @@ class AttestedAllocationAuditReceipt:
     audit_input_digest: str
     sample_relation_receipt_digests: tuple[tuple[str, ...], ...]
     obligation_admission_digests: tuple[str, ...]
+    goal_service_counts: tuple[tuple[str, int], ...]
     crowdout_fraction: float
 
     def __init__(
@@ -46,6 +48,7 @@ class AttestedAllocationAuditReceipt:
         audit_input_digest: str,
         sample_relation_receipt_digests: tuple[tuple[str, ...], ...] = (),
         obligation_admission_digests: tuple[str, ...] = (),
+        goal_service_counts: tuple[tuple[str, int], ...] = (),
         crowdout_fraction: float = 0.75,
         _token: object | None = None,
     ) -> None:
@@ -70,6 +73,11 @@ class AttestedAllocationAuditReceipt:
         )
         object.__setattr__(
             self,
+            "goal_service_counts",
+            goal_service_counts,
+        )
+        object.__setattr__(
+            self,
             "crowdout_fraction",
             _unit(crowdout_fraction, name="crowdout_fraction"),
         )
@@ -82,10 +90,33 @@ def _strict_goal_ids_for_sample(sample: AllocationSample) -> tuple[str, ...]:
     )
 
 
+def _goal_service_counts(
+    *,
+    samples: tuple[AllocationSample, ...],
+    obligations: tuple[AdmittedGoalObligation, ...],
+) -> tuple[tuple[str, int], ...]:
+    counts: Counter[str] = Counter()
+    obligation_ids = {obligation.goal_id for obligation in obligations}
+    for sample in samples:
+        if sample.protective:
+            continue
+        served_goal_ids = {
+            relation.goal_id
+            for relation in sample.attested_goal_relations
+            if relation.goal_id in obligation_ids
+        }
+        counts.update(served_goal_ids)
+    return tuple(
+        (obligation.goal_id, counts[obligation.goal_id])
+        for obligation in obligations
+    )
+
+
 def _audit_digest(
     *,
     samples: tuple[AllocationSample, ...],
     obligations: tuple[AdmittedGoalObligation, ...],
+    goal_service_counts: tuple[tuple[str, int], ...],
     crowdout_fraction: float,
 ) -> str:
     payload = {
@@ -103,6 +134,7 @@ def _audit_digest(
             }
             for sample in samples
         ],
+        "goal_service_counts": goal_service_counts,
         "obligations": [
             {
                 "goal_id": obligation.goal_id,
@@ -200,16 +232,22 @@ def audit_attested_attention_budget(
         obligation.admission_input_digest
         for obligation in ordered_obligations
     )
+    goal_service_counts = _goal_service_counts(
+        samples=samples,
+        obligations=ordered_obligations,
+    )
 
     return AttestedAllocationAuditReceipt(
         audit=audit,
         audit_input_digest=_audit_digest(
             samples=samples,
             obligations=ordered_obligations,
+            goal_service_counts=goal_service_counts,
             crowdout_fraction=crowdout_fraction,
         ),
         sample_relation_receipt_digests=sample_receipt_digests,
         obligation_admission_digests=obligation_digests,
+        goal_service_counts=goal_service_counts,
         crowdout_fraction=crowdout_fraction,
         _token=_ATTESTED_ALLOCATION_AUDIT_TOKEN,
     )

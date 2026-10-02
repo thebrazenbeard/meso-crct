@@ -312,3 +312,119 @@ def test_protective_sample_does_not_contribute_ordinary_goal_share():
     assert result.audit.nonprotective_samples == 0
     assert result.audit.protective_samples == 1
     assert result.audit.goal_shares == (("goal:g", 0.0),)
+
+
+def test_strict_audit_receipt_exposes_exact_goal_service_counts():
+    receipt = relation_receipt(
+        "goal:g",
+        "target:a",
+        source_id="map:count",
+    )
+    result = strict(
+        (sample("target:a", receipts=(receipt,)),),
+        (admitted_obligation(share=1.0),),
+    )
+
+    assert result.goal_service_counts == (("goal:g", 1),)
+
+
+def test_relation_free_strict_sample_yields_zero_service_count():
+    result = strict(
+        (sample("goal:g"),),
+        (admitted_obligation(share=1.0),),
+    )
+    assert result.goal_service_counts == (("goal:g", 0),)
+
+
+def test_duplicate_same_goal_relations_increment_service_count_once():
+    r1 = relation_receipt(
+        "goal:g",
+        "target:a",
+        source_id="map:count:1",
+    )
+    r2 = relation_receipt(
+        "goal:g",
+        "target:a",
+        source_id="map:count:2",
+    )
+    result = strict(
+        (sample("target:a", receipts=(r1, r2)),),
+        (admitted_obligation(share=1.0),),
+    )
+    assert result.goal_service_counts == (("goal:g", 1),)
+
+
+def test_one_sample_can_increment_multiple_goal_service_counts():
+    ra = relation_receipt(
+        "goal:a",
+        "target:shared",
+        source_id="map:count:a",
+    )
+    rb = relation_receipt(
+        "goal:b",
+        "target:shared",
+        source_id="map:count:b",
+    )
+    result = strict(
+        (sample("target:shared", receipts=(ra, rb)),),
+        (
+            admitted_obligation(
+                "goal:b",
+                0.5,
+                source_id="obligation:b:count",
+            ),
+            admitted_obligation(
+                "goal:a",
+                0.5,
+                source_id="obligation:a:count",
+            ),
+        ),
+    )
+    assert result.goal_service_counts == (
+        ("goal:a", 1),
+        ("goal:b", 1),
+    )
+
+
+def test_protective_sample_does_not_increment_goal_service_count():
+    receipt = relation_receipt(
+        "goal:g",
+        "hazard:fire",
+        source_id="map:count:protective",
+    )
+    result = strict(
+        (
+            sample(
+                "hazard:fire",
+                receipts=(receipt,),
+                protective=True,
+                priority=1.0,
+            ),
+        ),
+        (admitted_obligation(share=1.0),),
+    )
+    assert result.goal_service_counts == (("goal:g", 0),)
+
+
+def test_service_counts_and_digest_change_with_attested_service_history():
+    obligation = admitted_obligation(
+        share=1.0,
+        source_id="obligation:service-count",
+    )
+    relation = relation_receipt(
+        "goal:g",
+        "target:a",
+        source_id="map:service-count",
+    )
+    unserved = strict(
+        (sample("target:a"),),
+        (obligation,),
+    )
+    served = strict(
+        (sample("target:a", receipts=(relation,)),),
+        (obligation,),
+    )
+
+    assert unserved.goal_service_counts == (("goal:g", 0),)
+    assert served.goal_service_counts == (("goal:g", 1),)
+    assert unserved.audit_input_digest != served.audit_input_digest
