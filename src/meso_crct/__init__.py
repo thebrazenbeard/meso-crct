@@ -47,6 +47,14 @@ from .domain_aggregation import (
 )
 from .dynamics import DynamicsConfig, advance_without_input, decay_toward
 from .effort import EffortAssessment
+from .effort_admission import (
+    AdmittedEffortAssessment,
+    EffortAdmissionPolicy,
+    EffortProducerSpec,
+    InadmissibleEffortAssessment,
+    UnadmittedEffortAssessment,
+    admit_effort_assessment,
+)
 from .episode import (
     ExperienceLearningSpec,
     ExperienceTransactionResult,
@@ -273,6 +281,12 @@ __all__ = [
     "aggregate_domain_contributions",
     "DynamicsConfig",
     "EffortAssessment",
+    "AdmittedEffortAssessment",
+    "EffortAdmissionPolicy",
+    "EffortProducerSpec",
+    "InadmissibleEffortAssessment",
+    "UnadmittedEffortAssessment",
+    "admit_effort_assessment",
     "decay_toward",
     "advance_without_input",
     "NeedAxis",
