@@ -49,7 +49,7 @@ producer_revision
 source/evidence_ref
 currentness
 value
-uncertainty? 
+uncertainty?
 ```
 
 Do not force every datum into one universal generic object if typed payloads are cleaner.
