@@ -37,6 +37,7 @@ from .decision_cycle import (
     run_decision_cycle,
 )
 from .dynamics import DynamicsConfig, advance_without_input, decay_toward
+from .effort import EffortAssessment
 from .episode import (
     ExperienceLearningSpec,
     ExperienceTransactionResult,
@@ -82,6 +83,7 @@ from .memory import (
     release_association,
     revert_last,
 )
+from .outcomes import OutcomeClass
 from .plasticity import (
     PlasticityCandidate,
     PlasticityPolicy,
@@ -214,6 +216,7 @@ __all__ = [
     "FeasibilityState",
     "FeasibilityAssessment",
     "DynamicsConfig",
+    "EffortAssessment",
     "decay_toward",
     "advance_without_input",
     "NeedAxis",
@@ -291,6 +294,7 @@ __all__ = [
     "classify_phase",
     "frame",
     "evaluate_transition",
+    "OutcomeClass",
     "PlasticityPolicy",
     "PlasticityCandidate",
     "PlasticityReceiptMismatch",
