@@ -540,3 +540,53 @@ They cannot by themselves establish:
 - architecture use:
   - evaluate cost of reasoning/tool use itself where real compute/latency/budget evidence exists;
   - do not infer one universal resource-utility function.
+
+
+## Multi-goal pursuit / persistence / disengagement
+
+### DG-E-041 — Neal, Ballard & Vancouver (2017)
+- title: *Dynamic Self-Regulation and Multiple-Goal Pursuit*
+- journal: Annual Review of Organizational Psychology and Organizational Behavior
+- DOI: `10.1146/annurev-orgpsych-032516-113156`
+- contribution:
+  - reviews how actors manage competing demands on time/resources, select goals/tasks, sequence work, and adjust goals.
+- architecture use:
+  - distinguish current target selection from persistent multi-goal state and resource allocation.
+
+### DG-E-042 — Kim et al. (2023)
+- title: *Self-regulatory processes within and between diverse goals: The multiple goals regulation framework*
+- journal: Educational Psychologist
+- DOI: `10.1080/00461520.2022.2158828`
+- contribution:
+  - emphasizes goal prioritizing, shielding and switching within multi-goal regulation.
+- architecture use:
+  - comparative vocabulary for multi-goal allocation; no direct machine transfer.
+
+### DG-E-043 — Brandstätter & Bernecker (2022)
+- title: *Persistence and Disengagement in Personal Goal Pursuit*
+- journal: Annual Review of Psychology 73
+- DOI: `10.1146/annurev-psych-020821-110710`
+- contribution:
+  - persistence and timely disengagement can both be adaptive;
+  - reviews expectancy-value and volitional determinants.
+- architecture use:
+  - reject `persistence == success`;
+  - distinguish goal lifecycle from momentary selection.
+
+### DG-E-044 — Mayer & Freund (2022)
+- title: *Better off without? Benefits and costs of resolving goal conflict through goal shelving and goal disengagement*
+- journal: Motivation and Emotion
+- DOI: `10.1007/s11031-022-09966-x`
+- contribution:
+  - experimentally distinguishes temporary goal shelving from disengagement.
+- architecture use:
+  - supports `not selected now != abandoned goal`.
+
+### DG-E-045 — Gorges & Grund (2017)
+- title: *Aiming at a Moving Target: Theoretical and Methodological Considerations in the Study of Intraindividual Goal Conflict between Personal Goals*
+- journal: Frontiers in Psychology
+- DOI: `10.3389/fpsyg.2017.02011`
+- contribution:
+  - distinguishes resource conflict from other/inherent goal conflict and highlights heterogeneity of goal-conflict constructs.
+- architecture use:
+  - do not collapse all multi-goal conflict into one competition scalar.
