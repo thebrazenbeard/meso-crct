@@ -36,13 +36,17 @@ from .decision_cycle import (
     TargetRecallResolution,
     run_decision_cycle,
 )
+from .domain import DomainContribution
 from .dynamics import DynamicsConfig, advance_without_input, decay_toward
+from .effort import EffortAssessment
 from .episode import (
     ExperienceLearningSpec,
     ExperienceTransactionResult,
     process_appraised_experience,
 )
 from .events import EventIdentity, EventSequencer
+from .evidence import EvidenceCurrentness, EvidenceRef
+from .feasibility import FeasibilityAssessment, FeasibilityState
 from .evaluation_env import (
     EvalAction,
     EvalStep,
@@ -80,6 +84,7 @@ from .memory import (
     release_association,
     revert_last,
 )
+from .outcomes import OutcomeClass
 from .plasticity import (
     PlasticityCandidate,
     PlasticityPolicy,
@@ -207,7 +212,13 @@ __all__ = [
     "process_appraised_experience",
     "EventIdentity",
     "EventSequencer",
+    "EvidenceCurrentness",
+    "EvidenceRef",
+    "FeasibilityState",
+    "FeasibilityAssessment",
+    "DomainContribution",
     "DynamicsConfig",
+    "EffortAssessment",
     "decay_toward",
     "advance_without_input",
     "NeedAxis",
@@ -285,6 +296,7 @@ __all__ = [
     "classify_phase",
     "frame",
     "evaluate_transition",
+    "OutcomeClass",
     "PlasticityPolicy",
     "PlasticityCandidate",
     "PlasticityReceiptMismatch",

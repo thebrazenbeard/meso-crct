@@ -11,6 +11,7 @@ from dataclasses import dataclass
 import math
 
 from .circuit import CircuitState
+from .outcomes import OutcomeClass
 from .provenance import TransitionReceipt, state_fingerprint
 
 
@@ -61,6 +62,7 @@ class PlasticityCandidate:
     salience_gate: float
     gate_driver: str | None
     transition_receipt_id: str
+    outcome_class: OutcomeClass
 
     def __init__(
         self,
@@ -70,6 +72,7 @@ class PlasticityCandidate:
         salience_gate: float,
         gate_driver: str | None,
         transition_receipt_id: str,
+        outcome_class: OutcomeClass = OutcomeClass.OTHER,
         *,
         _token: object | None = None,
     ) -> None:
@@ -99,6 +102,7 @@ class PlasticityCandidate:
             "transition_receipt_id",
             transition_receipt_id,
         )
+        object.__setattr__(self, "outcome_class", outcome_class)
 
 
 def propose_plasticity(
@@ -107,6 +111,7 @@ def propose_plasticity(
     association_id: str,
     receipt: TransitionReceipt,
     policy: PlasticityPolicy,
+    outcome_class: OutcomeClass = OutcomeClass.OTHER,
 ) -> PlasticityCandidate:
     """Create a bounded persistent-learning candidate from a matching receipt."""
     if receipt.after_fingerprint != state_fingerprint(state):
@@ -137,6 +142,7 @@ def propose_plasticity(
         salience_gate=gate,
         gate_driver=gate_driver_out,
         transition_receipt_id=receipt.receipt_id,
+        outcome_class=outcome_class,
         _token=_PLASTICITY_CANDIDATE_TOKEN,
     )
 
