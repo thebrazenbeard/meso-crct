@@ -7,6 +7,10 @@ from enum import Enum
 import hashlib
 import json
 
+from .comparison_family import (
+    ComparisonFamilyView,
+    as_comparison_family_view,
+)
 from .domain_aggregation import ContributionFamilyView
 from .evidence import EvidenceCurrentness
 from .feasibility import FeasibilityAssessment, FeasibilityState
@@ -100,7 +104,7 @@ class FeasibilityAwareSelectionResult:
 def _wrapper_digest(
     *,
     candidate_target_ids: tuple[str, ...],
-    family_views: tuple[ContributionFamilyView, ...],
+    family_views: tuple[ComparisonFamilyView | ContributionFamilyView, ...],
     feasibility_input_digest: str,
     partial_order_input_digest: str,
 ) -> str:
@@ -108,14 +112,15 @@ def _wrapper_digest(
         "candidates": sorted(candidate_target_ids),
         "family_views": sorted(
             (
-                view.target_id,
-                view.family_id,
-                view.magnitude,
-                view.support_count,
-                tuple(sorted(view.contribution_kinds)),
-                tuple(sorted(view.source_ids)),
+                generic.target_id,
+                generic.family_id,
+                generic.magnitude,
+                generic.source_kind.value,
+                generic.source_digest,
             )
-            for view in family_views
+            for generic in (
+                as_comparison_family_view(view) for view in family_views
+            )
         ),
         "feasibility_input_digest": feasibility_input_digest,
         "partial_order_input_digest": partial_order_input_digest,
@@ -241,7 +246,7 @@ def gate_by_feasibility(
 def select_with_feasibility(
     *,
     candidate_target_ids: tuple[str, ...],
-    family_views: tuple[ContributionFamilyView, ...],
+    family_views: tuple[ComparisonFamilyView | ContributionFamilyView, ...],
     feasibility_assessments: tuple[FeasibilityAssessment, ...],
     policy: PartialOrderPolicy,
     admission_policy: FeasibilityAdmissionPolicy,

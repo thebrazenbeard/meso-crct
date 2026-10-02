@@ -1,4 +1,4 @@
-﻿"""Partial-order selection over normalized semantic-family views."""
+"""Partial-order selection over normalized semantic-family views."""
 
 from __future__ import annotations
 
@@ -6,8 +6,10 @@ from dataclasses import dataclass
 from enum import Enum
 import hashlib
 import json
-import math
-
+from .comparison_family import (
+    ComparisonFamilyView,
+    as_comparison_family_view,
+)
 from .domain_aggregation import ContributionFamilyView
 
 
@@ -64,7 +66,7 @@ class PartialOrderSelectionResult:
 def _decision_input_digest(
     *,
     candidate_target_ids: tuple[str, ...],
-    family_views: tuple[ContributionFamilyView, ...],
+    family_views: tuple[ComparisonFamilyView | ContributionFamilyView, ...],
     policy: PartialOrderPolicy,
 ) -> str:
     payload = {
@@ -82,14 +84,15 @@ def _decision_input_digest(
         },
         "family_views": sorted(
             (
-                view.target_id,
-                view.family_id,
-                view.magnitude,
-                view.support_count,
-                tuple(sorted(view.contribution_kinds)),
-                tuple(sorted(view.source_ids)),
+                generic.target_id,
+                generic.family_id,
+                generic.magnitude,
+                generic.source_kind.value,
+                generic.source_digest,
             )
-            for view in family_views
+            for generic in (
+                as_comparison_family_view(view) for view in family_views
+            )
         ),
     }
     encoded = json.dumps(
@@ -128,7 +131,7 @@ def _dominates(
 def select_by_partial_order(
     *,
     candidate_target_ids: tuple[str, ...],
-    family_views: tuple[ContributionFamilyView, ...],
+    family_views: tuple[ComparisonFamilyView | ContributionFamilyView, ...],
     policy: PartialOrderPolicy,
 ) -> PartialOrderSelectionResult:
     if len(candidate_target_ids) != len(set(candidate_target_ids)):
@@ -144,24 +147,19 @@ def select_by_partial_order(
     seen_view_keys: set[tuple[str, str]] = set()
 
     for view in family_views:
-        if view.target_id not in candidate_set:
+        generic = as_comparison_family_view(view)
+        if generic.target_id not in candidate_set:
             raise ValueError(
-                f"family view target is not a candidate: {view.target_id}"
+                f"family view target is not a candidate: {generic.target_id}"
             )
-        if not view.family_id.strip():
-            raise ValueError("family view family_id must be non-empty")
-        magnitude = float(view.magnitude)
-        if not math.isfinite(magnitude) or magnitude < 0.0 or magnitude > 1.0:
-            raise ValueError(
-                "family view magnitude must be finite and within [0, 1]"
-            )
-        key = (view.target_id, view.family_id)
+        key = (generic.target_id, generic.family_id)
         if key in seen_view_keys:
             raise ValueError(
-                f"duplicate target/family view: {view.target_id}/{view.family_id}"
+                f"duplicate target/family view: "
+                f"{generic.target_id}/{generic.family_id}"
             )
         seen_view_keys.add(key)
-        by_target[view.target_id][view.family_id] = view.magnitude
+        by_target[generic.target_id][generic.family_id] = generic.magnitude
 
     input_digest = _decision_input_digest(
         candidate_target_ids=candidate_target_ids,
