@@ -1,6 +1,6 @@
 # Sexuality Expansion Source Ledger V1
 
-Date: 2026-10-02  
+Date: 2026-10-02
 Status: `RESEARCH_SOURCE_LEDGER / NOT_EXHAUSTIVE`
 
 This ledger records external sources that materially constrain the proposed expansion of MESO-CRCT. Human findings establish distinctions and candidate mechanisms; they do not establish biological equivalence, machine phenomenology, or machine parameter values.
