@@ -504,3 +504,39 @@ They cannot by themselves establish:
   - demonstrates that seemingly intuitive context effects on delay discounting do not necessarily survive aggregate evidence.
 - architecture use:
   - warning against hard-coding folk assumptions about stress automatically making agents short-sighted.
+
+
+## Predictive resource regulation / allostasis refinements
+
+### DG-E-039 — Mushiake (2023)
+- title: *Allostasis and Homeostasis: Dynamic Adaptive Systems from a Neurophysiological Perspective*
+- DOI: `10.11477/mf.1416202504`
+- contribution:
+  - distinguishes reactive homeostasis from predictive regulation/dynamic adjustment.
+- architecture use:
+  - research provenance for current-deficit vs predicted-future-demand separation.
+
+### DG-E-040 — Ohira (2023)
+- title: *Integration of Interoception, Decision-Making, and Affect: Allostasis as Predictive Processing*
+- DOI: `10.11477/mf.1416202505`
+- contribution:
+  - reviews predictive-processing/allostasis framing.
+- architecture use:
+  - motivates forecast/current-state separation only; no requirement to import predictive-processing theory wholesale.
+
+### DG-M-006 — Ngo et al. (2022)
+- title: *Homeostatic and Allostatic Principles for Behavioral Regulation in Desert Reptiles: A Robotic Evaluation*
+- DOI: `10.1007/978-3-031-20470-8_33`
+- contribution:
+  - computational/robotic demonstration that dynamic reweighting using interoceptive/exteroceptive state can improve adaptation over reactive homeostasis in the tested model.
+- architecture use:
+  - machine-side evidence that predictive/dynamic resource regulation can be operational rather than purely metaphorical.
+- ceiling:
+  - specific bio-inspired simulated robot; not a general MESO algorithm.
+
+### DG-M-007 — resource-rationality research lineage
+- contribution:
+  - computational resource constraints can rationally alter inference/decision strategies.
+- architecture use:
+  - evaluate cost of reasoning/tool use itself where real compute/latency/budget evidence exists;
+  - do not infer one universal resource-utility function.
