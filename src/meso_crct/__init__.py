@@ -230,6 +230,13 @@ from .runtime import (
     frame,
 )
 from .salience import LearningState, RecruitmentState, SalienceState, SignalKind
+from .service_requirements import (
+    AllocationServiceHorizon,
+    ObligationServiceRequirement,
+    ObligationServiceState,
+    ServiceRequirementObligationMismatch,
+    derive_obligation_service_requirements,
+)
 from .selection import (
     SelectionPolicy,
     SelectionResult,
@@ -397,6 +404,11 @@ __all__ = [
     "GoalRelationGuardMode",
     "UnattestedAllocationAudit",
     "select_with_allocation_guard",
+    "AllocationServiceHorizon",
+    "ObligationServiceRequirement",
+    "ObligationServiceState",
+    "ServiceRequirementObligationMismatch",
+    "derive_obligation_service_requirements",
     "SourceKind",
     "Provenance",
     "VerifiedProvenance",
