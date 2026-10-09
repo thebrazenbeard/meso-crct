@@ -388,3 +388,21 @@ def test_horizon_requires_plain_nonnegative_integer_slots():
         m.AllocationServiceHorizon(1.5)
     with pytest.raises((TypeError, ValueError)):
         m.AllocationServiceHorizon(True)
+
+
+@pytest.mark.parametrize(
+    ("share", "expected"),
+    [
+        (0.1, 10**29 + 1),
+        (0.25, 25 * 10**28 + 1),
+    ],
+)
+def test_huge_finite_horizon_ceiling_never_rounds_required_service_down(
+    share: float, expected: int
+):
+    # The default Decimal precision (28 digits) rounded these products down
+    # and silently omitted one required service slot.
+    obligation = admitted_obligation("goal:huge", share)
+    requirement = only(derive((), (obligation,), 10**30 + 1))
+    assert requirement.required_total_slots == expected
+
