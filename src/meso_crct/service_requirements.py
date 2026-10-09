@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from decimal import Decimal, ROUND_CEILING
+from decimal import Decimal
 from enum import Enum
 import hashlib
 import json
@@ -139,8 +139,10 @@ def _required_slots(
     minimum_share: float,
     total_slots: int,
 ) -> int:
-    exact = Decimal(str(minimum_share)) * Decimal(total_slots)
-    return int(exact.to_integral_value(rounding=ROUND_CEILING))
+    # Avoid Decimal context precision rounding a large finite horizon down.
+    # The admitted share's decimal representation is an exact ratio.
+    numerator, denominator = Decimal(str(minimum_share)).as_integer_ratio()
+    return (numerator * total_slots + denominator - 1) // denominator
 
 
 def _state_for(
