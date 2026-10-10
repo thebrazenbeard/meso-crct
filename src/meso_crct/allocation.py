@@ -29,7 +29,7 @@ class GoalObligation:
     minimum_nonprotective_share: float = 0.0
 
     def __post_init__(self) -> None:
-        if not self.goal_id.strip():
+        if type(self.goal_id) is not str or not self.goal_id.strip():
             raise ValueError("goal_id must be non-empty")
         object.__setattr__(
             self,
@@ -49,8 +49,10 @@ class AllocationSample:
     protective: bool = False
 
     def __post_init__(self) -> None:
-        if not self.target_id.strip():
+        if type(self.target_id) is not str or not self.target_id.strip():
             raise ValueError("target_id must be non-empty")
+        if type(self.protective) is not bool:
+            raise ValueError("protective must be boolean")
         object.__setattr__(self, "priority", _unit(self.priority, name="priority"))
 
     @classmethod
@@ -89,7 +91,7 @@ class AllocationWindow:
     no_selection_cycles: int = 0
 
     def __post_init__(self) -> None:
-        if self.no_selection_cycles < 0:
+        if type(self.no_selection_cycles) is not int or self.no_selection_cycles < 0:
             raise ValueError("no_selection_cycles must be >= 0")
 
     def record(self, result: SelectionResult) -> "AllocationWindow":
