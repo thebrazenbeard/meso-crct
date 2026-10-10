@@ -1,0 +1,19 @@
+{
+  "schema": "BT2_CROSS_REPO_FRONTIER_V1",
+  "repository": "thebrazenbeard/meso-crct",
+  "source_baseline": {
+    "observed_sha": "4ea541c9e77f74966dff80c19b3bfb8a54738327",
+    "source_only": true
+  },
+  "lane": "motivation-and-salience",
+  "objective": "Exercise exact rational scheduling needs under high-precision minimum-share allocations.",
+  "acceptance_invariant": "Hedonic, salience and intent computations cannot grant external effect authority.",
+  "release_gates": {
+    "source_test": "REQUIRED",
+    "exact_head_review": "REQUIRED",
+    "installed_runtime": "NOT_CLAIMED",
+    "protected_effect_authority": false
+  },
+  "kind": "ADVISORY_SOURCE_ONLY",
+  "observed_at": "2026-10-09"
+}
