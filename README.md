@@ -95,6 +95,7 @@ Current V2 source includes:
 - explicit no-new-input temporal decay;
 - bounded receipt-bound plasticity candidates;
 - append-only versioned association memory with parent-bound lineage, replay checks, optimistic concurrency, and reversible revisions;
+- independent apply/revert arithmetic validation on reloaded association histories (a matching public digest alone is insufficient);
 - guarded association recall bound to current cue events;
 - recall replay ledger preventing one cue event from refreshing the same association repeatedly;
 - same-event multi-recall resolution preserving approach/avoid conflict without scalar summation;

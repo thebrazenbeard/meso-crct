@@ -144,6 +144,26 @@ def _validate_integrity(revisions: tuple[AssociationRevision, ...]) -> None:
                 "a revert cannot be the first association revision"
             )
 
+        # A checksum only binds the supplied fields to each other; its public,
+        # deterministic algorithm cannot establish that an arbitrary strength
+        # is a lawful update. Validate the transition semantics independently.
+        if revision.operation == "apply":
+            if revision.applied_delta == 0.0:
+                raise AssociationIntegrityError("zero-delta apply revision")
+            expected_strength = _signed_unit(
+                expected_previous + revision.applied_delta,
+                name="expected_strength",
+            )
+            if revision.strength != expected_strength:
+                raise AssociationIntegrityError("invalid applied strength")
+        elif prior is not None:
+            if revision.strength != prior.previous_strength:
+                raise AssociationIntegrityError("invalid revert strength")
+            if revision.applied_delta != (prior.previous_strength - prior.strength):
+                raise AssociationIntegrityError("invalid revert delta")
+            if revision.transition_receipt_id != prior.transition_receipt_id:
+                raise AssociationIntegrityError("invalid revert receipt lineage")
+
         expected_id = _revision_id(
             association_id=revision.association_id,
             version=revision.version,

@@ -41,6 +41,14 @@ constructed. This detects accidental or unsanctioned structural alteration of
 the reference history. It is an integrity check, not a cryptographic proof of
 who authored a valid-looking snapshot.
 
+The loader also independently validates each revision's transition arithmetic:
+an `apply` must equal the previous strength plus its bounded delta after
+clamping; a `revert` must restore the preceding strength with the exact
+opposite delta and preserve its receipt lineage. Recomputing a public revision
+digest around impossible strengths does not bypass these checks. A digest and
+consistent arithmetic still **do not authenticate the receipt's provenance**
+or grant authority to an externally supplied memory snapshot.
+
 ## Replay protection
 
 For a given association, a verified transition receipt may contribute at most

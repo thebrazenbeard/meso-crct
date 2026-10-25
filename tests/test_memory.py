@@ -21,6 +21,7 @@ from meso_crct import (
     propose_plasticity,
     revert_last,
 )
+from meso_crct.memory import _revision_id
 
 
 def state_and_receipt(
@@ -263,3 +264,60 @@ def test_tampered_parent_chain_is_rejected():
     )
     with pytest.raises(AssociationIntegrityError):
         AssociationMemory(revisions=(tampered,))
+
+
+def test_recomputed_digest_does_not_launder_impossible_apply_strength():
+    memory = apply_candidate(AssociationMemory(), candidate_for(), expected_version=0)
+    original = memory.revisions[0]
+    forged_strength = 0.9
+    forged = AssociationRevision(
+        association_id=original.association_id,
+        version=original.version,
+        strength=forged_strength,
+        previous_strength=original.previous_strength,
+        applied_delta=original.applied_delta,
+        transition_receipt_id=original.transition_receipt_id,
+        operation=original.operation,
+        parent_revision_id=original.parent_revision_id,
+        revision_id=_revision_id(
+            association_id=original.association_id,
+            version=original.version,
+            strength=forged_strength,
+            previous_strength=original.previous_strength,
+            applied_delta=original.applied_delta,
+            transition_receipt_id=original.transition_receipt_id,
+            operation=original.operation,
+            parent_revision_id=original.parent_revision_id,
+        ),
+    )
+    with pytest.raises(AssociationIntegrityError, match="strength"):
+        AssociationMemory(revisions=(forged,))
+
+
+def test_recomputed_digest_does_not_launder_impossible_revert_strength():
+    memory = apply_candidate(AssociationMemory(), candidate_for(), expected_version=0)
+    reverted = revert_last(memory, "cue->outcome", expected_version=1)
+    original = reverted.revisions[-1]
+    forged_strength = 0.9
+    forged = AssociationRevision(
+        association_id=original.association_id,
+        version=original.version,
+        strength=forged_strength,
+        previous_strength=original.previous_strength,
+        applied_delta=original.applied_delta,
+        transition_receipt_id=original.transition_receipt_id,
+        operation=original.operation,
+        parent_revision_id=original.parent_revision_id,
+        revision_id=_revision_id(
+            association_id=original.association_id,
+            version=original.version,
+            strength=forged_strength,
+            previous_strength=original.previous_strength,
+            applied_delta=original.applied_delta,
+            transition_receipt_id=original.transition_receipt_id,
+            operation=original.operation,
+            parent_revision_id=original.parent_revision_id,
+        ),
+    )
+    with pytest.raises(AssociationIntegrityError, match="revert"):
+        AssociationMemory(revisions=(reverted.revisions[0], forged))
