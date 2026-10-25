@@ -1,7 +1,7 @@
 """A measured need update is not a self-certified drive or goal completion."""
 
-from datetime import datetime, timedelta, timezone
 import math
+from datetime import UTC, datetime, timedelta, timezone
 
 import pytest
 
@@ -9,19 +9,21 @@ from meso_crct import (
     CircuitState,
     DynamicsConfig,
     HomeostaticState,
-    NeedObservationCapacity as PublicNeedObservationCapacity,
     NeedAffordance,
     NeedAxis,
     TargetAppraisalInput,
     advance_without_input,
     build_target_appraisal,
 )
+from meso_crct import (
+    NeedObservationCapacity as PublicNeedObservationCapacity,
+)
 from meso_crct.need_observation import (
-    AdmissionClock,
     MAX_NEED_OBSERVATION_AXES,
     MAX_NEED_OBSERVATION_CLAIMS,
     MAX_NEED_OBSERVATION_FIELD_CHARS,
     MAX_NEED_OBSERVATION_RECORDS,
+    AdmissionClock,
     NeedObservation,
     NeedObservationCapacity,
     NeedObservationConflict,
@@ -36,8 +38,7 @@ from meso_crct.need_observation import (
 )
 from meso_crct.provenance import Provenance, SourceKind
 
-
-WHEN = datetime(2026, 10, 25, 12, 0, tzinfo=timezone.utc)
+WHEN = datetime(2026, 10, 25, 12, 0, tzinfo=UTC)
 CLOCK = AdmissionClock(trusted_as_of=WHEN)
 
 
@@ -198,7 +199,7 @@ def test_admitted_level_changes_appraisal_pressure_not_hedonic_welfare():
 
 
 def test_admission_requires_explicit_trusted_clock_and_rejects_9999_poisoning():
-    sample = observed(observed_at=datetime(9999, 1, 1, tzinfo=timezone.utc))
+    sample = observed(observed_at=datetime(9999, 1, 1, tzinfo=UTC))
     admitted = verifier(sample).admit(sample)
     before = initial()
     with pytest.raises(TypeError, match="clock"):
@@ -209,7 +210,7 @@ def test_admission_requires_explicit_trusted_clock_and_rejects_9999_poisoning():
 
 
 def test_valid_new_sample_remains_admissible_after_blocked_future_poison():
-    poisoned = observed(observed_at=datetime(9999, 1, 1, tzinfo=timezone.utc))
+    poisoned = observed(observed_at=datetime(9999, 1, 1, tzinfo=UTC))
     before = initial()
     with pytest.raises(NeedObservationFuture):
         admit_need_observation(before, verifier(poisoned).admit(poisoned), clock=CLOCK)
