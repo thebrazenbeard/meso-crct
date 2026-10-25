@@ -7,16 +7,15 @@ before admission. Updates are in-memory and cause no downstream effect.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
-from datetime import datetime, timedelta, timezone
-from itertools import islice
 import math
-from typing import Iterable
+from collections.abc import Iterable
+from dataclasses import dataclass, replace
+from datetime import UTC, datetime, timedelta
+from itertools import islice
 
 from ._numeric import finite_real
 from .homeostasis import HomeostaticState
 from .provenance import Provenance, SourceKind
-
 
 EXTERNAL_OBSERVATION_SOURCES = frozenset({
     SourceKind.ENVIRONMENT,
@@ -41,11 +40,16 @@ class NeedObservationFuture(ValueError):
     """An observation exceeds the explicit caller-supplied trusted time ceiling."""
 
 
+class NeedObservationExpired(ValueError):
+    """An observation is older than the caller's optional freshness window."""
+
+
 class NeedObservationCapacity(ValueError):
     """Resource budget exhausted; never discard event history silently."""
 
 
 MAX_FUTURE_SKEW_SECONDS = 300.0
+MAX_OBSERVATION_AGE_SECONDS = 366.0 * 24.0 * 60.0 * 60.0
 MAX_NEED_OBSERVATION_RECORDS = 256
 MAX_NEED_OBSERVATION_CLAIMS = 256
 MAX_NEED_OBSERVATION_AXES = 128
@@ -54,7 +58,8 @@ MAX_NEED_OBSERVATION_FIELD_CHARS = 256
 
 def _bounded_identifier(value: object, *, name: str) -> None:
     if not isinstance(value, str):
-        raise ValueError(f"{name} must be non-empty text")
+        # Preserve the established malformed-identifier exception contract.
+        raise ValueError(f"{name} must be non-empty text")  # noqa: TRY004
     if len(value) > MAX_NEED_OBSERVATION_FIELD_CHARS:
         raise NeedObservationCapacity(f"{name} exceeds observation field capacity")
     if not value.strip():
@@ -71,6 +76,7 @@ class AdmissionClock:
 
     trusted_as_of: datetime
     maximum_future_skew_seconds: float = 0.0
+    maximum_observation_age_seconds: float | None = None
 
     def __post_init__(self) -> None:
         if (
@@ -79,7 +85,7 @@ class AdmissionClock:
         ):
             raise ValueError("trusted_as_of must be an aware UTC timestamp")
         object.__setattr__(
-            self, "trusted_as_of", self.trusted_as_of.astimezone(timezone.utc)
+            self, "trusted_as_of", self.trusted_as_of.astimezone(UTC)
         )
         skew = self.maximum_future_skew_seconds
         if (
@@ -90,6 +96,16 @@ class AdmissionClock:
         ):
             raise ValueError("skew must be finite, numeric, and in [0, 300] seconds")
         object.__setattr__(self, "maximum_future_skew_seconds", float(skew))
+        age = self.maximum_observation_age_seconds
+        if age is not None:
+            if (
+                isinstance(age, bool)
+                or not isinstance(age, (int, float))
+                or not 0.0 <= age <= MAX_OBSERVATION_AGE_SECONDS
+                or not math.isfinite(float(age))
+            ):
+                raise ValueError("observation age must be finite, numeric, and bounded")
+            object.__setattr__(self, "maximum_observation_age_seconds", float(age))
 
 
 @dataclass(frozen=True, slots=True)
@@ -107,14 +123,15 @@ class NeedObservation:
         for name in ("event_id", "need_id", "evidence_ref"):
             _bounded_identifier(getattr(self, name), name=name)
         if isinstance(self.measured_level, bool) or not isinstance(self.measured_level, (int, float)):
-            raise ValueError("measured_level must be a numeric measurement, not text or a flag")
+            # Existing callers and tests classify invalid measurements as ValueError.
+            raise ValueError("measured_level must be a numeric measurement, not text or a flag")  # noqa: TRY004
         level = finite_real(self.measured_level, name="measured_level")
         if not math.isfinite(level) or not 0.0 <= level <= 1.0:
             raise ValueError("measured_level must be finite and within [0, 1]")
         object.__setattr__(self, "measured_level", level)
         if not isinstance(self.observed_at, datetime) or self.observed_at.utcoffset() != timedelta(0):
             raise ValueError("observed_at must be an aware UTC timestamp")
-        object.__setattr__(self, "observed_at", self.observed_at.astimezone(timezone.utc))
+        object.__setattr__(self, "observed_at", self.observed_at.astimezone(UTC))
         if not isinstance(self.provenance, Provenance) or (
             not isinstance(self.provenance.source_kind, SourceKind)
         ) or (
@@ -260,6 +277,17 @@ def admit_need_observation(
             ):
                 return ledger
             raise NeedObservationConflict("event ID reused for different evidence")
+
+    # An old first sample must not masquerade as current when the caller has
+    # opted into freshness. Duplicate exact events remain replay-idempotent
+    # even after their original admission window has elapsed.
+    if (
+        clock.maximum_observation_age_seconds is not None
+        and observation.observed_at < clock.trusted_as_of
+        and (clock.trusted_as_of - observation.observed_at).total_seconds()
+        > clock.maximum_observation_age_seconds
+    ):
+        raise NeedObservationExpired("observation is expired for this admission clock")
 
     # The immutable history is the only replay/conflict proof in this source
     # adapter. It must not be truncated or silently wrapped when full.
