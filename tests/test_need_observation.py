@@ -25,6 +25,7 @@ from meso_crct.need_observation import (
     NeedObservation,
     NeedObservationCapacity,
     NeedObservationConflict,
+    NeedObservationExpired,
     NeedObservationFuture,
     NeedObservationLedger,
     NeedObservationRecord,
@@ -237,6 +238,44 @@ def test_small_future_skew_is_explicitly_bounded_and_replay_safe():
     with pytest.raises(TypeError, match="clock"):
         admit_need_observation(initial(), verifier(just_after).admit(just_after), clock=None)
     assert admit_need_observation(admitted, verifier(just_after).admit(just_after), clock=policy) is admitted
+
+
+def test_optional_observation_age_ceiling_rejects_expired_first_measurement():
+    ancient = observed(observed_at=WHEN - timedelta(seconds=11))
+    accepted = verifier(ancient).admit(ancient)
+    before = initial()
+
+    # The original caller contract remains valid without an opt-in expiry.
+    assert admit_need_observation(before, accepted, clock=CLOCK).homeostasis.axis("rest").current_level == 0.5
+
+    policy = AdmissionClock(trusted_as_of=WHEN, maximum_observation_age_seconds=10)
+    with pytest.raises(NeedObservationExpired, match="expired"):
+        admit_need_observation(before, accepted, clock=policy)
+    assert before.homeostasis.axis("rest").current_level == 0.1
+    assert before.records == ()
+
+    edge = observed(event_id="environment:boundary", observed_at=WHEN - timedelta(seconds=10))
+    updated = admit_need_observation(before, verifier(edge).admit(edge), clock=policy)
+    assert updated.homeostasis.axis("rest").current_level == 0.5
+    # Exactly admitted history remains replay-idempotent after the window expires.
+    much_later = AdmissionClock(trusted_as_of=WHEN + timedelta(days=3), maximum_observation_age_seconds=10)
+    assert admit_need_observation(updated, verifier(edge).admit(edge), clock=much_later) is updated
+
+
+def test_opt_in_observation_age_policy_is_typed_bounded_and_independent_of_future_skew():
+    for bad in (True, False, "10", -1, math.nan, math.inf, -math.inf, 10**10000):
+        with pytest.raises(ValueError, match="age"):
+            AdmissionClock(trusted_as_of=WHEN, maximum_observation_age_seconds=bad)
+    assert AdmissionClock(trusted_as_of=WHEN).maximum_observation_age_seconds is None
+
+    # An explicitly permitted future sample isn't accidentally treated as old.
+    future = observed(observed_at=WHEN + timedelta(seconds=4))
+    policy = AdmissionClock(
+        trusted_as_of=WHEN,
+        maximum_future_skew_seconds=4,
+        maximum_observation_age_seconds=0,
+    )
+    assert admit_need_observation(initial(), verifier(future).admit(future), clock=policy).records
 
 
 def test_no_new_input_time_tick_does_not_mint_satisfaction():
