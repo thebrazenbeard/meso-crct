@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-import math
 from typing import Iterable
 
+from ._numeric import finite_real
 from .allocation import (
     AllocationAudit,
     AllocationWindow,
@@ -17,9 +17,7 @@ from .selection import SelectionPolicy, TargetState
 
 
 def _unit(value: float, *, name: str) -> float:
-    value = float(value)
-    if not math.isfinite(value):
-        raise ValueError(f"{name} must be finite")
+    value = finite_real(value, name=name)
     return min(1.0, max(0.0, value))
 
 

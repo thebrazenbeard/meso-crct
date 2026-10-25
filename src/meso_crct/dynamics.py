@@ -8,23 +8,23 @@ trusted update.
 from __future__ import annotations
 
 from dataclasses import dataclass
-import math
 
 from .circuit import CircuitState
+from ._numeric import finite_real
 from .salience import LearningState, RecruitmentState, SalienceState
 from .state import RewardState
 
 
 def _positive_finite(value: float, *, name: str) -> float:
-    value = float(value)
-    if not math.isfinite(value) or value <= 0.0:
+    value = finite_real(value, name=name)
+    if value <= 0.0:
         raise ValueError(f"{name} must be finite and > 0")
     return value
 
 
 def _nonnegative_finite(value: float, *, name: str) -> float:
-    value = float(value)
-    if not math.isfinite(value) or value < 0.0:
+    value = finite_real(value, name=name)
+    if value < 0.0:
         raise ValueError(f"{name} must be finite and >= 0")
     return value
 
@@ -37,10 +37,8 @@ def decay_toward(
     half_life_seconds: float,
 ) -> float:
     """Exponential relaxation toward baseline."""
-    value = float(value)
-    baseline = float(baseline)
-    if not math.isfinite(value) or not math.isfinite(baseline):
-        raise ValueError("value and baseline must be finite")
+    value = finite_real(value, name="value")
+    baseline = finite_real(baseline, name="baseline")
     elapsed = _nonnegative_finite(elapsed_seconds, name="elapsed_seconds")
     half_life = _positive_finite(half_life_seconds, name="half_life_seconds")
     if elapsed == 0.0:

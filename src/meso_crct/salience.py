@@ -9,7 +9,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from enum import StrEnum
-import math
+
+from ._numeric import finite_real
 
 
 _MIN_UNIT = 0.0
@@ -19,10 +20,7 @@ _MAX_SIGNED = 1.0
 
 
 def _finite(value: float, *, name: str) -> float:
-    value = float(value)
-    if not math.isfinite(value):
-        raise ValueError(f"{name} must be finite")
-    return value
+    return finite_real(value, name=name)
 
 
 def _unit(value: float, *, name: str) -> float:
