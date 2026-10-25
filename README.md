@@ -95,6 +95,7 @@ Current V2 source includes:
 - grounded semantic appraisal;
 - homeostatic incentive modulation;
 - in-memory caller-admitted need-observation updates with replay/staleness checks, without claiming independent evidence custody or goal satisfaction;
+- fail-closed resource budgets for that immutable observation ledger (256 historical events, 256 verifier claims, 128 need axes and 256 characters per identifier/source field); at capacity, new events are rejected rather than erasing replay evidence. This source-only memory is not an independently verified or restart-durable outcome store;
 - typed arbitration and explicit multi-target selection policy;
 - runtime phase classification;
 - distinct event identity separate from state/content identity;

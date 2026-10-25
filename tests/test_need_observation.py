@@ -9,6 +9,7 @@ from meso_crct import (
     CircuitState,
     DynamicsConfig,
     HomeostaticState,
+    NeedObservationCapacity as PublicNeedObservationCapacity,
     NeedAffordance,
     NeedAxis,
     TargetAppraisalInput,
@@ -17,7 +18,12 @@ from meso_crct import (
 )
 from meso_crct.need_observation import (
     AdmissionClock,
+    MAX_NEED_OBSERVATION_AXES,
+    MAX_NEED_OBSERVATION_CLAIMS,
+    MAX_NEED_OBSERVATION_FIELD_CHARS,
+    MAX_NEED_OBSERVATION_RECORDS,
     NeedObservation,
+    NeedObservationCapacity,
     NeedObservationConflict,
     NeedObservationFuture,
     NeedObservationLedger,
@@ -41,6 +47,7 @@ def observed(
     measured_level=0.5,
     observed_at=WHEN,
     source_kind=SourceKind.ENVIRONMENT,
+    evidence_ref="sensor-sample:42",
 ):
     return NeedObservation(
         event_id=event_id,
@@ -52,7 +59,7 @@ def observed(
             source_id="sensor:rest",
             source_revision="v1",
         ),
-        evidence_ref="sensor-sample:42",
+        evidence_ref=evidence_ref,
     )
 
 
@@ -74,6 +81,10 @@ def test_no_observation_never_forges_need_recovery_or_satisfaction():
     assert ledger.homeostasis.axis("rest").deficit == pytest.approx(0.8)
     assert ledger.records == ()
     assert ledger.effect_authorized is False
+
+
+def test_capacity_error_is_exported_through_public_package_api():
+    assert PublicNeedObservationCapacity is NeedObservationCapacity
 
 
 def test_explicit_exact_claim_admission_updates_only_one_need():
@@ -242,4 +253,106 @@ def test_no_new_input_time_tick_does_not_mint_satisfaction():
     assert after.homeostasis == ledger.homeostasis
     assert after.homeostasis.axis("rest").deficit == pytest.approx(0.8)
     assert ledger.records == ()
+
+
+def test_full_event_history_fails_closed_without_erasing_replay_provenance():
+    ledger = initial()
+    first = None
+    for index in range(MAX_NEED_OBSERVATION_RECORDS):
+        sample = observed(
+            event_id=f"environment:bounded:{index}",
+            observed_at=WHEN - timedelta(seconds=MAX_NEED_OBSERVATION_RECORDS - index),
+        )
+        admitted = verifier(sample).admit(sample)
+        first = first or admitted
+        ledger = admit_need_observation(ledger, admitted, clock=CLOCK)
+
+    assert len(ledger.records) == MAX_NEED_OBSERVATION_RECORDS
+    assert admit_need_observation(ledger, first, clock=CLOCK) is ledger
+    assert ledger.records[0].observation == first.observation
+
+    # Evicting a historical event to make room would allow old IDs to be
+    # reused and invalidate the evidence lineage. Full is an explicit STOP.
+    additional = observed(event_id="environment:bounded:overflow", observed_at=WHEN)
+    with pytest.raises(NeedObservationCapacity, match="capacity"):
+        admit_need_observation(ledger, verifier(additional).admit(additional), clock=CLOCK)
+    assert len(ledger.records) == MAX_NEED_OBSERVATION_RECORDS
+
+    different_replay = observed(
+        event_id=first.observation.event_id,
+        measured_level=0.6,
+        observed_at=first.observation.observed_at,
+    )
+    with pytest.raises(NeedObservationConflict):
+        admit_need_observation(ledger, verifier(different_replay).admit(different_replay), clock=CLOCK)
+
+
+@pytest.mark.parametrize("field", ["event_id", "need_id", "evidence_ref"])
+def test_large_observation_identifiers_are_rejected_before_ledger_admission(field):
+    with pytest.raises(NeedObservationCapacity, match=field):
+        observed(**{field: "x" * (MAX_NEED_OBSERVATION_FIELD_CHARS + 1)})
+
+
+@pytest.mark.parametrize("field", ["source_id", "source_revision"])
+def test_large_provenance_claims_are_rejected_before_ledger_admission(field):
+    with pytest.raises(NeedObservationCapacity, match=field):
+        observed_source = Provenance(
+            source_kind=SourceKind.ENVIRONMENT,
+            source_id="sensor:rest" if field != "source_id" else "x" * (MAX_NEED_OBSERVATION_FIELD_CHARS + 1),
+            source_revision="v1" if field != "source_revision" else "x" * (MAX_NEED_OBSERVATION_FIELD_CHARS + 1),
+        )
+        NeedObservation(
+            event_id="environment:42", need_id="rest", measured_level=0.5,
+            observed_at=WHEN, provenance=observed_source, evidence_ref="sensor:42",
+        )
+
+
+def test_verifier_rejects_unbounded_claim_generator_and_identifier():
+    yielded = 0
+
+    def never_ending():
+        nonlocal yielded
+        while True:
+            yielded += 1
+            yield observed(event_id=f"environment:{yielded}")
+
+    with pytest.raises(NeedObservationCapacity, match="accepted"):
+        NeedObservationVerifier(never_ending(), verifier_id="operator")
+    assert yielded == MAX_NEED_OBSERVATION_CLAIMS + 1
+    with pytest.raises(NeedObservationCapacity, match="verifier_id"):
+        NeedObservationVerifier((), verifier_id="x" * (MAX_NEED_OBSERVATION_FIELD_CHARS + 1))
+
+
+def test_resource_budget_exact_boundary_values_are_accepted():
+    sample = observed(event_id="e" * MAX_NEED_OBSERVATION_FIELD_CHARS)
+    admitted = verifier(sample).admit(sample)
+    assert admit_need_observation(initial(), admitted, clock=CLOCK).records[0].observation == sample
+    allowed = tuple(observed(event_id=f"distinct:{index}") for index in range(MAX_NEED_OBSERVATION_CLAIMS))
+    assert verifier(*allowed).admit(allowed[-1]).observation == allowed[-1]
+    axes = HomeostaticState(tuple(
+        NeedAxis(f"need:{index}", setpoint=1.0, current_level=0.5)
+        for index in range(MAX_NEED_OBSERVATION_AXES)
+    ))
+    assert len(NeedObservationLedger(homeostasis=axes).homeostasis.axes) == MAX_NEED_OBSERVATION_AXES
+
+
+def test_ledger_rejects_outsize_reconstructed_history_and_axis_set():
+    sample = observed()
+    record = NeedObservationRecord(sample, "operator")
+    with pytest.raises(NeedObservationCapacity, match="history"):
+        NeedObservationLedger(
+            homeostasis=initial().homeostasis,
+            records=(record,) * (MAX_NEED_OBSERVATION_RECORDS + 1),
+        )
+    oversized = HomeostaticState(tuple(
+        NeedAxis(f"need:{index}", setpoint=1.0, current_level=0.5)
+        for index in range(MAX_NEED_OBSERVATION_AXES + 1)
+    ))
+    with pytest.raises(NeedObservationCapacity, match="axes"):
+        NeedObservationLedger(homeostasis=oversized)
+    large_axis_name = HomeostaticState((
+        NeedAxis("n" * (MAX_NEED_OBSERVATION_FIELD_CHARS + 1), setpoint=1, current_level=0),
+    ))
+    with pytest.raises(NeedObservationCapacity, match="need_id"):
+        NeedObservationLedger(homeostasis=large_axis_name)
 

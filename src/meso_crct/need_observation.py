@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from datetime import datetime, timedelta, timezone
+from itertools import islice
 import math
 from typing import Iterable
 
@@ -40,7 +41,24 @@ class NeedObservationFuture(ValueError):
     """An observation exceeds the explicit caller-supplied trusted time ceiling."""
 
 
+class NeedObservationCapacity(ValueError):
+    """Resource budget exhausted; never discard event history silently."""
+
+
 MAX_FUTURE_SKEW_SECONDS = 300.0
+MAX_NEED_OBSERVATION_RECORDS = 256
+MAX_NEED_OBSERVATION_CLAIMS = 256
+MAX_NEED_OBSERVATION_AXES = 128
+MAX_NEED_OBSERVATION_FIELD_CHARS = 256
+
+
+def _bounded_identifier(value: object, *, name: str) -> None:
+    if not isinstance(value, str):
+        raise ValueError(f"{name} must be non-empty text")
+    if len(value) > MAX_NEED_OBSERVATION_FIELD_CHARS:
+        raise NeedObservationCapacity(f"{name} exceeds observation field capacity")
+    if not value.strip():
+        raise ValueError(f"{name} must be non-empty text")
 
 
 @dataclass(frozen=True, slots=True)
@@ -87,9 +105,7 @@ class NeedObservation:
 
     def __post_init__(self) -> None:
         for name in ("event_id", "need_id", "evidence_ref"):
-            value = getattr(self, name)
-            if not isinstance(value, str) or not value.strip():
-                raise ValueError(f"{name} must be non-empty")
+            _bounded_identifier(getattr(self, name), name=name)
         if isinstance(self.measured_level, bool) or not isinstance(self.measured_level, (int, float)):
             raise ValueError("measured_level must be a numeric measurement, not text or a flag")
         level = finite_real(self.measured_level, name="measured_level")
@@ -105,6 +121,9 @@ class NeedObservation:
             self.provenance.source_kind not in EXTERNAL_OBSERVATION_SOURCES
         ):
             raise ValueError("need observations require an external admitted source kind")
+        _bounded_identifier(self.provenance.source_id, name="source_id")
+        if self.provenance.source_revision is not None:
+            _bounded_identifier(self.provenance.source_revision, name="source_revision")
 
 
 _ADMISSION_TOKEN = object()
@@ -135,11 +154,15 @@ class NeedObservationVerifier:
     """Exact-value admission list supplied by an accountable external caller."""
 
     def __init__(self, accepted: Iterable[NeedObservation], *, verifier_id: str):
-        if not isinstance(verifier_id, str) or not verifier_id.strip():
-            raise ValueError("verifier_id must be non-empty")
-        claims = frozenset(accepted)
-        if not all(isinstance(item, NeedObservation) for item in claims):
+        _bounded_identifier(verifier_id, name="verifier_id")
+        # Bounded intake also terminates an unending generator. Never build
+        # an unbounded set from a caller-controlled iterable.
+        supplied = tuple(islice(accepted, MAX_NEED_OBSERVATION_CLAIMS + 1))
+        if len(supplied) > MAX_NEED_OBSERVATION_CLAIMS:
+            raise NeedObservationCapacity("accepted observation claim capacity exceeded")
+        if not all(isinstance(item, NeedObservation) for item in supplied):
             raise TypeError("accepted observations must be NeedObservation values")
+        claims = frozenset(supplied)
         self._accepted = claims
         self._verifier_id = verifier_id
 
@@ -159,8 +182,7 @@ class NeedObservationRecord:
     def __post_init__(self) -> None:
         if not isinstance(self.observation, NeedObservation):
             raise TypeError("record observation must be typed")
-        if not isinstance(self.verifier_id, str) or not self.verifier_id.strip():
-            raise ValueError("verifier_id must be non-empty")
+        _bounded_identifier(self.verifier_id, name="verifier_id")
 
 
 @dataclass(frozen=True, slots=True)
@@ -175,6 +197,12 @@ class NeedObservationLedger:
             raise TypeError("homeostasis must be typed")
         if not isinstance(self.records, tuple):
             raise TypeError("ledger records must be an immutable tuple")
+        if len(self.records) > MAX_NEED_OBSERVATION_RECORDS:
+            raise NeedObservationCapacity("need observation history capacity exceeded")
+        if len(self.homeostasis.axes) > MAX_NEED_OBSERVATION_AXES:
+            raise NeedObservationCapacity("need observation axes capacity exceeded")
+        for axis in self.homeostasis.axes:
+            _bounded_identifier(axis.need_id, name="need_id")
         seen_events: set[str] = set()
         latest: dict[str, NeedObservation] = {}
         for record in self.records:
@@ -232,6 +260,11 @@ def admit_need_observation(
             ):
                 return ledger
             raise NeedObservationConflict("event ID reused for different evidence")
+
+    # The immutable history is the only replay/conflict proof in this source
+    # adapter. It must not be truncated or silently wrapped when full.
+    if len(ledger.records) >= MAX_NEED_OBSERVATION_RECORDS:
+        raise NeedObservationCapacity("need observation history capacity exceeded")
 
     current = ledger.homeostasis.axis(observation.need_id)
     if current is None:
