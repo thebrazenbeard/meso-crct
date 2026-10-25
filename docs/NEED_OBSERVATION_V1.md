@@ -22,7 +22,13 @@ sensor, persist to disk, or connect to Volition/Pre-Active.
    permit up to 300 seconds with `maximum_future_skew_seconds`. UTC-only,
    finite numeric bounds reject malformed clocks. Any observation beyond
    `trusted_as_of + allowed_skew` is rejected **before ledger mutation**,
-   including claimed readings dated in year 9999.
+   including claimed readings dated in year 9999. Optionally, callers can set
+   `maximum_observation_age_seconds` to a finite, nonnegative duration no
+   greater than 366 days (31,622,400 seconds). The default `None` preserves
+   historical admission behavior. With this policy enabled, a distinct
+   observation older than the caller-supplied UTC time by more than the chosen
+   age is rejected as `NeedObservationExpired`; the age boundary itself is
+   accepted. This does **not** authenticate the clock or physical reading.
 5. `admit_need_observation(ledger, admitted, clock=clock)` updates only that existing `NeedAxis.current_level`
    in a new `HomeostaticState` and appends a typed record with the caller's
    verifier label. Other need axes, their setpoints/sensitivities, and reward
@@ -32,6 +38,11 @@ sensor, persist to disk, or connect to Volition/Pre-Active.
    non-increasing timestamp for the same need is stale. Different needs have
    independent clocks. Reconstructed ledger snapshots validate this ordering
    and agreement between the latest admitted measurement and current level.
+   Admission checks future skew first, then existing-event replay/conflict,
+   then optional age expiry, then the bounded history capacity (256 records)
+   and per-need ordering. Consequently exact previously admitted events remain
+   replay-idempotent after their age window, but novel expired events cannot
+   consume history capacity or modify need state.
 
 For instance, if `NeedAxis('rest', setpoint=0.9, current_level=0.1)` receives an
 admitted measured level of `0.5`, deficit changes from `0.8` to `0.4` at the
@@ -46,8 +57,8 @@ reading is authentic, or that a protected action is permitted.
   reference code cannot prove otherwise. Public Python constructors and
   module-private tokens are not cryptographic access controls.
 - The API checks `observed_at` against an **explicit caller-supplied UTC time
-  ceiling** with at most five minutes of stated skew. It never invents a clock
-  from its own model/system state. It cannot verify that the caller's clock is
+  ceiling** with at most five minutes of stated skew and optional maximum age.
+  It never invents a clock from its own model/system state. It cannot verify that the caller's clock is
   honestly measured or independently administered. If the caller fabricates an
   advanced `trusted_as_of`, future-date poisoning remains possible, so real
   deployments require authenticated custody and trusted clock-source policy.
@@ -70,7 +81,8 @@ need update. Without an admitted outcome, the unmet need remains unchanged.
 ## Testing
 
 `tests/test_need_observation.py` covers exact-value admission, nonfinite and
-untyped source rejection, independent need clocks, stale/conflicting replay,
-future-date poisoning, strict time ceiling and bounded skew, immutable updates,
-and reconstructed-state consistency. No real-world clock custody, sensor, or
-external effect is exercised.
+  untyped source rejection, independent need clocks, stale/conflicting replay,
+  future-date poisoning, strict time ceiling, bounded skew, optional expired
+  first-sample rejection with replay preservation, immutable updates, and
+  reconstructed-state consistency. No real-world clock custody, sensor, or
+  external effect is exercised.
