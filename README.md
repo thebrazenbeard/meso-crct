@@ -88,6 +88,7 @@ Current V2 source includes:
 - typed reward/protection, salience, learning, recruitment, and homeostatic state;
 - grounded semantic appraisal;
 - homeostatic incentive modulation;
+- in-memory caller-admitted need-observation updates with replay/staleness checks, without claiming independent evidence custody or goal satisfaction;
 - typed arbitration and explicit multi-target selection policy;
 - runtime phase classification;
 - distinct event identity separate from state/content identity;
@@ -143,6 +144,9 @@ Core state and appraisal:
 - `src/meso_crct/salience.py`
 - `src/meso_crct/semantic.py`
 - `src/meso_crct/homeostasis.py`
+- `src/meso_crct/need_observation.py` — in-memory exact-claim need update;
+  requires explicit caller-supplied UTC admission clock with bounded future skew
+  (see `docs/NEED_OBSERVATION_V1.md`; no independent custody or effects)
 - `src/meso_crct/appraisal.py`
 - `src/meso_crct/circuit.py`
 - `src/meso_crct/dynamics.py`
