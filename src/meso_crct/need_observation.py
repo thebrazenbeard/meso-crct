@@ -41,11 +41,16 @@ class NeedObservationFuture(ValueError):
     """An observation exceeds the explicit caller-supplied trusted time ceiling."""
 
 
+class NeedObservationExpired(ValueError):
+    """An observation is older than the caller's optional freshness window."""
+
+
 class NeedObservationCapacity(ValueError):
     """Resource budget exhausted; never discard event history silently."""
 
 
 MAX_FUTURE_SKEW_SECONDS = 300.0
+MAX_OBSERVATION_AGE_SECONDS = 366.0 * 24.0 * 60.0 * 60.0
 MAX_NEED_OBSERVATION_RECORDS = 256
 MAX_NEED_OBSERVATION_CLAIMS = 256
 MAX_NEED_OBSERVATION_AXES = 128
@@ -71,6 +76,7 @@ class AdmissionClock:
 
     trusted_as_of: datetime
     maximum_future_skew_seconds: float = 0.0
+    maximum_observation_age_seconds: float | None = None
 
     def __post_init__(self) -> None:
         if (
@@ -90,6 +96,16 @@ class AdmissionClock:
         ):
             raise ValueError("skew must be finite, numeric, and in [0, 300] seconds")
         object.__setattr__(self, "maximum_future_skew_seconds", float(skew))
+        age = self.maximum_observation_age_seconds
+        if age is not None:
+            if (
+                isinstance(age, bool)
+                or not isinstance(age, (int, float))
+                or not 0.0 <= age <= MAX_OBSERVATION_AGE_SECONDS
+                or not math.isfinite(float(age))
+            ):
+                raise ValueError("observation age must be finite, numeric, and bounded")
+            object.__setattr__(self, "maximum_observation_age_seconds", float(age))
 
 
 @dataclass(frozen=True, slots=True)
@@ -260,6 +276,17 @@ def admit_need_observation(
             ):
                 return ledger
             raise NeedObservationConflict("event ID reused for different evidence")
+
+    # An old first sample must not masquerade as current when the caller has
+    # opted into freshness. Duplicate exact events remain replay-idempotent
+    # even after their original admission window has elapsed.
+    if (
+        clock.maximum_observation_age_seconds is not None
+        and observation.observed_at < clock.trusted_as_of
+        and (clock.trusted_as_of - observation.observed_at).total_seconds()
+        > clock.maximum_observation_age_seconds
+    ):
+        raise NeedObservationExpired("observation is expired for this admission clock")
 
     # The immutable history is the only replay/conflict proof in this source
     # adapter. It must not be truncated or silently wrapped when full.
