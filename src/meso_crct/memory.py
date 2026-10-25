@@ -11,8 +11,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 import hashlib
 import json
-import math
 
+from ._numeric import finite_real
 from .plasticity import PlasticityCandidate
 from .review import AssociationReviewRegistry
 from .review_evidence import (
@@ -27,9 +27,7 @@ from .review_evidence import (
 
 
 def _signed_unit(value: float, *, name: str) -> float:
-    value = float(value)
-    if not math.isfinite(value):
-        raise ValueError(f"{name} must be finite")
+    value = finite_real(value, name=name)
     return min(1.0, max(-1.0, value))
 
 

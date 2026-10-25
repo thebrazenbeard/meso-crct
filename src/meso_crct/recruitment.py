@@ -7,15 +7,13 @@ recruitment distinct from pleasure, truth, authority, and action execution.
 from __future__ import annotations
 
 from dataclasses import dataclass
-import math
 
+from ._numeric import finite_real
 from .salience import RecruitmentState, SalienceState
 
 
 def _unit(value: float, *, name: str) -> float:
-    value = float(value)
-    if not math.isfinite(value):
-        raise ValueError(f"{name} must be finite")
+    value = finite_real(value, name=name)
     if not 0.0 <= value <= 1.0:
         raise ValueError(f"{name} must be within [0, 1]")
     return value

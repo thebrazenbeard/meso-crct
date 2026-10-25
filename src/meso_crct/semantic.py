@@ -8,13 +8,12 @@ receiving system's context, goals, memory, or unresolved model state.
 from __future__ import annotations
 
 from dataclasses import dataclass
-import math
+
+from ._numeric import finite_real
 
 
 def _unit(value: float, *, name: str) -> float:
-    value = float(value)
-    if not math.isfinite(value):
-        raise ValueError(f"{name} must be finite")
+    value = finite_real(value, name=name)
     return min(1.0, max(0.0, value))
 
 
@@ -27,6 +26,8 @@ class SemanticEvidence:
     source_asserts_importance: bool = False
 
     def __post_init__(self) -> None:
+        if not isinstance(self.source_asserts_importance, bool):
+            raise ValueError("source_asserts_importance must be boolean")
         for name in (
             "context_relevance",
             "goal_relevance",

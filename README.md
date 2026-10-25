@@ -81,6 +81,12 @@ No salience, reward, pleasure, prediction error, semantic relevance, homeostatic
 
 Internal state may influence processing. It is not authority.
 
+Numeric state and policy inputs require real finite Python `int`/`float`
+values; booleans, numeric strings, nulls, and unrepresentably large integers
+fail closed rather than being coerced into synthetic reward or drive strength.
+Existing bounded clamping of valid finite numbers is unchanged. A typed signal
+still cannot supply consent or protected-effect authority.
+
 ## Implemented reference layers
 
 Current V2 source includes:

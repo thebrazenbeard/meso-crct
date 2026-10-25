@@ -7,7 +7,8 @@ separate channels so protective behavior does not require deep negative valence.
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-import math
+
+from ._numeric import finite_real
 
 
 BASELINE_PLEASURE: float = 0.0
@@ -19,10 +20,7 @@ _MAX_SIGNAL: float = 1.0
 
 
 def _finite(value: float, *, name: str) -> float:
-    value = float(value)
-    if not math.isfinite(value):
-        raise ValueError(f"{name} must be finite")
-    return value
+    return finite_real(value, name=name)
 
 
 def _unit_interval(value: float, *, name: str) -> float:

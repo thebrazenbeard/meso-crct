@@ -12,6 +12,7 @@ from datetime import datetime, timedelta, timezone
 import math
 from typing import Iterable
 
+from ._numeric import finite_real
 from .homeostasis import HomeostaticState
 from .provenance import Provenance, SourceKind
 
@@ -91,7 +92,7 @@ class NeedObservation:
                 raise ValueError(f"{name} must be non-empty")
         if isinstance(self.measured_level, bool) or not isinstance(self.measured_level, (int, float)):
             raise ValueError("measured_level must be a numeric measurement, not text or a flag")
-        level = float(self.measured_level)
+        level = finite_real(self.measured_level, name="measured_level")
         if not math.isfinite(level) or not 0.0 <= level <= 1.0:
             raise ValueError("measured_level must be finite and within [0, 1]")
         object.__setattr__(self, "measured_level", level)
