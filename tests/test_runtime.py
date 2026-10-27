@@ -136,6 +136,18 @@ def test_direct_register_write_cannot_become_accepted_source():
         ProvenanceVerifier([claim], verifier_id="runtime-root-v1")
 
 
+@pytest.mark.parametrize(
+    "untyped_kind",
+    ["direct_register_write", "environment", "operator_input", None, 42],
+)
+def test_untyped_source_kind_cannot_become_verified_provenance(untyped_kind):
+    # Raw strings compare equal to StrEnum values but do not carry the typed
+    # source authority boundary. In particular, `is` checks in the verifier
+    # must never accept a string spelling DIRECT_REGISTER_WRITE.
+    with pytest.raises(ValueError, match="source_kind"):
+        Provenance(source_kind=untyped_kind, source_id="untyped-source")
+
+
 def test_verified_provenance_cannot_be_constructed_directly():
     from meso_crct import VerifiedProvenance
 

@@ -32,6 +32,11 @@ class Provenance:
     source_revision: str | None = None
 
     def __post_init__(self) -> None:
+        # SourceKind is a StrEnum: a raw string compares equal to the enum
+        # member but fails identity checks at the verifier's authority gate.
+        # Reject that ambiguity at the unverified claim boundary.
+        if not isinstance(self.source_kind, SourceKind):
+            raise ValueError("source_kind must be a typed SourceKind")
         if not self.source_id.strip():
             raise ValueError("source_id must be non-empty")
 
