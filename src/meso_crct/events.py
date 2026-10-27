@@ -13,6 +13,18 @@ import hashlib
 _EVENT_IDENTITY_TOKEN = object()
 
 
+def _validate_stream_id(stream_id: str) -> None:
+    if not isinstance(stream_id, str) or not stream_id.strip():
+        raise ValueError("stream_id must be a non-empty string")
+
+
+def _validate_sequence(sequence: int, *, name: str) -> None:
+    # bool is an int subclass, while NaN and floats can keep issuing the same
+    # event ID indefinitely when used as immutable sequence counters.
+    if isinstance(sequence, bool) or not isinstance(sequence, int) or sequence < 1:
+        raise ValueError(f"{name} must be a positive integer")
+
+
 @dataclass(frozen=True, slots=True, init=False)
 class EventIdentity:
     stream_id: str
@@ -29,12 +41,10 @@ class EventIdentity:
     ) -> None:
         if _token is not _EVENT_IDENTITY_TOKEN:
             raise TypeError("EventIdentity must be issued by EventSequencer")
-        if not stream_id.strip():
-            raise ValueError("stream_id must be non-empty")
-        if sequence < 1:
-            raise ValueError("sequence must be >= 1")
-        if not event_id.strip():
-            raise ValueError("event_id must be non-empty")
+        _validate_stream_id(stream_id)
+        _validate_sequence(sequence, name="sequence")
+        if not isinstance(event_id, str) or not event_id.strip():
+            raise ValueError("event_id must be a non-empty string")
         object.__setattr__(self, "stream_id", stream_id)
         object.__setattr__(self, "sequence", sequence)
         object.__setattr__(self, "event_id", event_id)
@@ -48,10 +58,8 @@ class EventSequencer:
     next_sequence: int = 1
 
     def __post_init__(self) -> None:
-        if not self.stream_id.strip():
-            raise ValueError("stream_id must be non-empty")
-        if self.next_sequence < 1:
-            raise ValueError("next_sequence must be >= 1")
+        _validate_stream_id(self.stream_id)
+        _validate_sequence(self.next_sequence, name="next_sequence")
 
     def issue(self) -> tuple["EventSequencer", EventIdentity]:
         sequence = self.next_sequence
