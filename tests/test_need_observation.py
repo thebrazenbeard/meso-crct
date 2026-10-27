@@ -118,7 +118,7 @@ def test_model_self_asserted_internal_state_cannot_be_an_observation():
     with pytest.raises(ValueError, match="external"):
         observed(source_kind=SourceKind.DIRECT_REGISTER_WRITE)
     # A raw string that compares equal to a StrEnum is not a typed source claim.
-    with pytest.raises(ValueError, match="external"):
+    with pytest.raises(ValueError, match="source_kind"):
         observed(source_kind="environment")
 
 
