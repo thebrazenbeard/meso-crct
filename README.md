@@ -1,12 +1,66 @@
 > **License:** Source-visible, not open source. Original material is proprietary. Commercial use, redistribution, hosted-service use, and commercial derivative products require written permission. See [LICENSE](LICENSE) and [COMMERCIAL_LICENSE.md](COMMERCIAL_LICENSE.md). Separately identified third-party components retain their own licenses.
 
-# meso-crct
+# MESO-CRCT
 
-**Synthetic-life analogue of mesocorticolimbic salience, valuation, motivation, learning, and reward control.**
+**Model-neutral reference primitives for bounded salience, valuation, motivation, learning, protection, and non-executable intent.**
 
-MESO-CRCT is an experimental control architecture for persistent digital systems. Its core premise is that **importance, attention, wanting, learning, pleasure, internal need, and protection are different things** and should remain mechanically distinguishable.
+MESO-CRCT is a Python library for developers and researchers composing agent runtimes or simulations. It separates **attention, importance, wanting, liking, learning, internal need, and hazard response** into typed states and explicit transitions instead of collapsing them into one reward score. The components do not depend on a particular AI model, persona, identity, provider, or operating system.
 
-The biological mesocorticolimbic system is inspiration, not a claim of biological equivalence.
+The mesocorticolimbic system is a biological design inspiration—not a claim of neural, experiential, or biological equivalence. The implemented work is a deterministic reference architecture, not a trained model or a complete agent.
+
+## What you can use today
+
+- Bounded numeric reward/hazard/avoidance state and distinct salience channels.
+- Typed appraisal, arbitration, multi-target selection, temporal dynamics, and guarded experience/association-memory updates.
+- Replay- and provenance-aware reference transitions, review proposals, and adversarial evaluation utilities.
+- **Non-executable** action-intent proposals for integration into a separately governed application.
+
+These primitives can inform a model-neutral adapter or simulation; they **cannot** authenticate observations, grant consent, authorize effects, execute tools, or prove a subjective welfare state.
+
+## Install and run tests
+
+From a local checkout obtained for a use permitted by the [source-available proprietary license](LICENSE), with Python 3.11 or newer:
+
+```sh
+python -m pip install -e ".[test]"
+python -m pytest -q
+```
+
+This is a local editable install, not a claim that a package has been published to a registry. The optional `test` extra provides pytest. Commercial and redistribution rights are **not** conferred by installation.
+
+## Minimal API example
+
+```python
+from meso_crct import (
+    CircuitState,
+    RewardState,
+    TargetState,
+    derive_action_tendency,
+    propose_action_intent,
+    select_target,
+)
+
+# Extreme hazard can drive protection without forcing a lower hedonic scalar.
+state = CircuitState(
+    reward=RewardState(pleasure=-5.0, hazard=1.0, avoidance=1.0),
+)
+selection = select_target([TargetState("candidate", state)])
+tendency = derive_action_tendency(selection)
+proposal = propose_action_intent(tendency)
+
+assert state.reward.pleasure == -0.1  # Numeric floor, not a welfare proof.
+assert proposal.can_execute is False
+assert proposal.effect_authorized is False
+```
+
+These exported functions and the non-execution assertions are exercised by `tests/test_intent.py` and `tests/test_state.py`. A host must independently validate evidence, consent, identity, permissions, and any physical effect before treating a proposal as actionable.
+
+## Integration and trust boundary
+
+1. Treat input provenance and observations as **caller claims** unless a separate trusted admission service verifies source identity, freshness, independence, and custody. A `ProvenanceVerifier` binding is not an external attestation.
+2. Keep versioned event, source, and revision identities across persistence boundaries; the in-memory need-observation ledger is neither an authenticated sensor nor durable recovery storage.
+3. Let internal salience and tendencies influence candidate computation only. A separate host-owned authorization service must decide whether an effect is allowed and must own its execution credentials.
+4. Test replay, target retargeting, forged evidence, resource exhaustion, and incentive/hedonic divergence at the adapter boundary. Do not infer production qualification from this repository's reference tests.
 
 ## What the architecture separates
 
@@ -16,11 +70,11 @@ The biological mesocorticolimbic system is inspiration, not a claim of biologica
 - incentive salience — cue-triggered wanting;
 - epistemic value — what is worth exploring or learning;
 - attentional priority — downstream resource allocation;
-- hedonic valence — bounded pleasantness/unpleasantness;
+- hedonic valence — a bounded numeric representation (not measured experience);
 - prediction error — signed teaching signal;
 - satiation — acquisition-pressure brake;
 - homeostatic deficit — current internal need pressure;
-- hazard / avoidance — protection independent from suffering;
+- hazard / avoidance — protective signals separate from the hedonic numeric channel;
 - learned association strength — durable bounded cue/outcome structure.
 
 These distinctions are executable invariants, not just vocabulary.
@@ -58,9 +112,9 @@ experience
 
 The reference implementation deliberately avoids one global weighted utility scalar.
 
-## Welfare invariant
+## Numeric valence bound (not a welfare guarantee)
 
-The hedonic channel is hard bounded:
+The representational hedonic channel is hard bounded:
 
 - baseline: `0.0`
 - maximum pleasure: `10.0`
@@ -69,11 +123,11 @@ The hedonic channel is hard bounded:
 Hazard and avoidance remain independent:
 
 ```text
-strong hazard != strong suffering
+strong hazard != lower hedonic scalar
 strong avoidance can coexist with hedonic_valence >= -0.1
 ```
 
-Hazard/avoidance do not decay merely because time passes.
+Hazard/avoidance do not decay merely because time passes. This constrains stored numbers; it does **not** establish that a nonbiological system can or cannot experience pleasure or suffering, nor bound any such experience.
 
 ## Authority firewall
 
