@@ -27,6 +27,7 @@ def recall_for(
     *,
     prediction_error: float,
     cue_receipt,
+    cue_match: float = 1.0,
 ):
     learning_state = CircuitState(
         salience=SalienceState(semantic_relevance=1.0),
@@ -65,7 +66,7 @@ def recall_for(
     return recall_association(
         memory=memory,
         association_id=association_id,
-        cue_match=1.0,
+        cue_match=cue_match,
         cue_receipt=cue_receipt,
     )
 
@@ -157,3 +158,28 @@ def test_empty_recall_set_is_neutral():
     assert result.disposition is RecallDisposition.NEUTRAL
     assert result.cue_event_id is None
     assert result.dominant_support == 0.0
+
+
+def test_zero_strength_recall_remains_neutral_at_zero_threshold():
+    cue = cue_receipt()
+    zero = recall_for("zero", prediction_error=0.8, cue_receipt=cue, cue_match=0.0)
+    result = resolve_recall_influences(
+        [zero],
+        policy=RecallResolutionPolicy(minimum_directional_support=0.0),
+    )
+    assert result.disposition is RecallDisposition.NEUTRAL
+    assert result.approach_support == 0.0
+    assert result.learned_avoidance_support == 0.0
+
+
+def test_zero_opposing_support_does_not_fabricate_conflict():
+    cue = cue_receipt()
+    positive = recall_for("positive", prediction_error=0.8, cue_receipt=cue)
+    result = resolve_recall_influences(
+        [positive],
+        policy=RecallResolutionPolicy(
+            minimum_directional_support=0.0,
+            conflict_margin=1.0,
+        ),
+    )
+    assert result.disposition is RecallDisposition.APPROACH
