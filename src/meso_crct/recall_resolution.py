@@ -133,8 +133,8 @@ def resolve_recall_influences(
     approach = max(item.approach_support for item in influences)
     avoid = max(item.learned_avoidance_support for item in influences)
     threshold = policy.minimum_directional_support
-    approach_active = approach >= threshold
-    avoid_active = avoid >= threshold
+    approach_active = approach > 0.0 and approach >= threshold
+    avoid_active = avoid > 0.0 and avoid >= threshold
 
     if approach_active and avoid_active:
         if abs(approach - avoid) <= policy.conflict_margin:
