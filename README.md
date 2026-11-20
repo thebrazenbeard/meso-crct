@@ -258,3 +258,9 @@ It does **not** establish:
 - truth or authority from internal state.
 
 No third-party implementation code was copied into MESO-CRCT by the V2 work.
+
+## Editor startup containment — tracked source (2026-11-20)
+
+The tracked `main` source formerly contained a concealed VS Code `folderOpen` task invoking obfuscated `.vscode/ini` through Node. The task list is now empty, `task.allowAutomaticTasks` is explicitly `"off"`, and the obfuscated file is removed from this source tree. Historical Git source remains for investigation.
+
+**Limits:** This is source-only containment, not proof that older checkouts, editor extensions, user/global settings, local credentials, or any previous host execution are safe. Do not execute historical suspect assets.
