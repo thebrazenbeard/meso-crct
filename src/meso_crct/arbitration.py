@@ -87,6 +87,17 @@ def arbitrate(state: CircuitState) -> ArbitrationDecision:
     candidates = _upstream_candidates(state)
     dominant, priority = max(candidates, key=lambda item: item[1])
 
+    if priority < ORIENT_THRESHOLD and state.salience.exploration_requested:
+        # An explicit optional inspection request needs no fabricated learning progress.
+        # The floor is an arbitration policy constant, not a personal utility score.
+        return ArbitrationDecision(
+            mode=ArbitrationMode.ORIENTING,
+            priority=ORIENT_THRESHOLD,
+            dominant_driver="exploration_requested",
+            supporting_drivers=(),
+            incentive_after_satiation=effective_incentive,
+            prior_attentional_priority=state.salience.attentional_priority,
+        )
     if priority < ORIENT_THRESHOLD:
         return ArbitrationDecision(
             mode=ArbitrationMode.QUIESCENT,

@@ -130,3 +130,43 @@ def test_appraised_target_direct_construction_is_blocked():
             semantic=genuine.semantic,
             homeostatic=genuine.homeostatic,
         )
+
+
+def test_explicit_exploration_is_optional_without_learning_progress():
+    from meso_crct import DecisionCycleState, run_decision_cycle
+    spec = TargetAppraisalInput("poetry", novelty=0.0, learning_progress=0.0)
+    def cycle(spec):
+        return run_decision_cycle(DecisionCycleState(), [build_target_appraisal(spec)])[1]
+    from dataclasses import replace
+    # Missing optional support must be a behavioral failure on the old API.
+    if "exploration_requested" not in spec.__dataclass_fields__:
+        pytest.fail("explicit exploration request has no representation")
+    requested = replace(spec, exploration_requested=True)
+    app = build_target_appraisal(requested)
+    result = cycle(requested)
+    assert app.state.salience.epistemic_value == 0.0
+    assert app.state.learning.learning_progress == 0.0
+    assert result.intent.kind.value == "inspect"
+    assert result.intent.source == "exploration_requested"
+    assert not result.intent.effect_authorized and not result.intent.can_execute
+    assert cycle(spec).intent.kind.value == "hold"
+    assert cycle(replace(requested, exploration_requested=False)).intent.kind.value == "hold"
+    assert cycle(replace(requested, reward=RewardState(hazard=1.0))).intent.kind.value == "withdraw"
+
+
+def test_exploration_request_is_typed_and_legacy_state_fingerprint_is_stable():
+    import json, hashlib
+    from dataclasses import asdict, replace
+    from meso_crct import state_fingerprint
+    spec = TargetAppraisalInput("poetry")
+    if "exploration_requested" not in spec.__dataclass_fields__:
+        pytest.fail("explicit exploration request has no representation")
+    with pytest.raises((TypeError, ValueError)):
+        build_target_appraisal(replace(spec, exploration_requested=1))
+    legacy = build_target_appraisal(spec).state
+    payload = asdict(legacy)
+    payload["salience"].pop("exploration_requested", None)
+    expected = hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    assert state_fingerprint(legacy) == expected
+    requested = build_target_appraisal(replace(spec, exploration_requested=True)).state
+    assert state_fingerprint(requested) != expected

@@ -54,8 +54,11 @@ class SalienceState:
     incentive_salience: float = 0.0
     epistemic_value: float = 0.0
     attentional_priority: float = 0.0
+    exploration_requested: bool = False
 
     def __post_init__(self) -> None:
+        if type(self.exploration_requested) is not bool:
+            raise ValueError("exploration_requested must be boolean")
         for name in (
             "perceptual_salience",
             "semantic_relevance",

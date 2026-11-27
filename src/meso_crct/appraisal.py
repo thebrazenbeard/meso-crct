@@ -33,6 +33,8 @@ class TargetAppraisalInput:
     recruitment: RecruitmentState = field(default_factory=RecruitmentState)
     homeostasis: HomeostaticState = field(default_factory=HomeostaticState)
     affordances: tuple[NeedAffordance, ...] = ()
+    # Current caller-supplied request to explore; not a measured desire or authority.
+    exploration_requested: bool = False
 
     def __post_init__(self) -> None:
         if not self.target_id.strip():
@@ -93,6 +95,7 @@ def build_target_appraisal(spec: TargetAppraisalInput) -> AppraisedTarget:
         incentive_salience=homeostatic.effective_incentive,
         epistemic_value=epistemic_value,
         attentional_priority=0.0,
+        exploration_requested=spec.exploration_requested,
     )
     learning = LearningState(
         prediction_error=spec.prediction_error,
