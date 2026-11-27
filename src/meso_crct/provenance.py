@@ -113,7 +113,11 @@ class ProvenanceVerifier:
 
 
 def state_fingerprint(state: CircuitState) -> str:
-    payload = json.dumps(asdict(state), sort_keys=True, separators=(",", ":"))
+    fields = asdict(state)
+    # Preserve existing fingerprints for states without the additive request.
+    if not state.salience.exploration_requested:
+        fields["salience"].pop("exploration_requested")
+    payload = json.dumps(fields, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
