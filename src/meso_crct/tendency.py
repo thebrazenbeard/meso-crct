@@ -197,7 +197,7 @@ def derive_action_tendency(
 
     if recall is not None:
         threshold = policy.minimum_recall_directional_support
-        if recall.learned_avoidance_support >= threshold:
+        if recall.learned_avoidance_support > 0.0 and recall.learned_avoidance_support >= threshold:
             return _make(
                 target_id=target_id,
                 kind=ActionTendencyKind.LEARNED_WITHDRAW,
@@ -206,7 +206,7 @@ def derive_action_tendency(
                 selection_mode=decision.mode.value,
                 recall=recall,
             )
-        if recall.approach_support >= threshold:
+        if recall.approach_support > 0.0 and recall.approach_support >= threshold:
             return _make(
                 target_id=target_id,
                 kind=ActionTendencyKind.APPROACH,
